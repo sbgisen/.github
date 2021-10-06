@@ -4,9 +4,48 @@ on:
   workflow_call:
 
 jobs:
+  changed-file-filter:
+    name: changed-file-filter
+    runs-on: ubuntu-18.04
+    outputs:
+      cpp: ${{ steps.changes.outputs.cpp }}
+      python: ${{ steps.changes.outputs.python }}
+      cmake: ${{ steps.changes.outputs.cmake }}
+      yaml: ${{ steps.changes.outputs.yaml }}
+      xml: ${{ steps.changes.outputs.xml }}
+    steps:
+      - name: changed-file-filter
+        id: changes
+        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 #v2.10.2
+        with:
+          filters: |
+            cpp:
+              - '**.h'
+              - '**.hpp'
+              - '**.hh'
+              - '**.hxx'
+              - '**.c'
+              - '**.cpp'
+              - '**.cc'
+              - '**.cxx'
+            python:
+              - '**.py'
+            cmake:
+              - '**/CMakeLists.txt'
+              - '**.cmake'
+            yaml:
+              - '**.yaml'
+              - '**.yml'
+            xml:
+              - '**/launch/**.launch'
+              - '**/launch/**.xml'
+              - '**/package.xml'
+
   clang:
     name: runner / c++
     runs-on: ubuntu-18.04
+    needs: changed-file-filter
+    if: needs.changed-file-filter.outputs.cpp == 'true'
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -29,6 +68,8 @@ jobs:
   python:
     name: runner / python
     runs-on: ubuntu-18.04
+    needs: changed-file-filter
+    if: needs.changed-file-filter.outputs.python == 'true'
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -57,6 +98,8 @@ jobs:
   cmake:
     name: runner / cmake-format
     runs-on: ubuntu-18.04
+    needs: changed-file-filter
+    if: needs.changed-file-filter.outputs.cmake == 'true'
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -75,6 +118,8 @@ jobs:
   yamllint:
     name: runner / yamllint
     runs-on: ubuntu-18.04
+    needs: changed-file-filter
+    if: needs.changed-file-filter.outputs.yaml == 'true'
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -90,6 +135,8 @@ jobs:
   xml:
     name: runner / xml
     runs-on: ubuntu-18.04
+    needs: changed-file-filter
+    if: needs.changed-file-filter.outputs.xml == 'true'
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
