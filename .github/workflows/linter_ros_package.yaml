@@ -40,6 +40,8 @@ jobs:
               - '**/launch/**.launch'
               - '**/launch/**.xml'
               - '**/package.xml'
+              - '**.xacro'
+              - '**.urdf'
 
   clang:
     name: runner / c++
@@ -145,7 +147,8 @@ jobs:
       - name: xmllint format
         run: |
           sudo apt install libxml2-utils
-          find . -type f -regextype posix-egrep -regex "(.*\/launch\/.*\.(launch|xml)|.*package.xml)$" -print0 |\
+          regex="(.*\/launch\/.*\.(launch|xml)|.*package\.xml|.*\.urdf|.*\.xacro)$"
+          find . -type f -regextype posix-egrep -regex ${regex} -print0 |\
           xargs -0 -I {} -P8 bash -c "xmllint --format {} |\
           diff -B {} - |\
           patch {}"

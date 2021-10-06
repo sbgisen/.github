@@ -17,9 +17,10 @@ The workflow can check the following items automatically.
   - Format (cmake-format)
 - Yaml
   - Lint (yamllint)
-- XML (launch files, package.xml)
+- XML (launch files, package.xml, xacro files, urdf files)
   - Format (xmllint)
   - Lint (xmllint)
+    - Only launch files and package.xml
 
 #### Usage
 
