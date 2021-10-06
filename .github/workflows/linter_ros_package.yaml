@@ -69,24 +69,38 @@ jobs:
           filter_mode: file
           fail_on_error: true
           yamllint_flags: -c .yamllint .
-  xmllint:
-    name: runner / xmllint
+  xml:
+    name: runner / xml
     runs-on: ubuntu-18.04
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: xmllint format
+        run: |
+          sudo apt install libxml2-utils
+          find . -type f -regextype posix-egrep -regex "(.*\/launch\/.*\.(launch|xml)|.*package.xml)$" -print0 |\
+          xargs -0 -I {} -P8 bash -c "xmllint --format {} |\
+          diff -B {} - |\
+          patch {}"
+      - name: suggester / xmllint
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: xmllint
+          filter_mode: file
+          fail_on_error: true
       - name: xmllint roslaunch
+        if: always()
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          sudo apt install libxml2-utils
           wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd
           files=`find . -type f -regextype posix-egrep -regex ".*\/launch\/.*\.(launch|xml)$"`
           xmllint --noout --schema roslaunch.xsd ${files} 2>&1 1>/dev/null |\
           reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
       - name: xmllint package.xml
+        if: always()
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
