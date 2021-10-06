@@ -1,0 +1,23 @@
+name: lint-ros-package
+
+on:
+  workflow_call:
+
+jobs:
+  flake8-lint:
+    name: runner / flake8
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: "2.7"
+      - name: flake8 Lint
+        uses: reviewdog/action-flake8@49cfab000299623090ddea740bbe30178ef12247 # v3.2.0
+        with:
+          reporter: github-pr-review
+          filter_mode: file
+          fail_on_error: true
+          flake8_args: --ignore=F401,W503 --max-line-length 119
