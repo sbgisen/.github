@@ -54,6 +54,24 @@ jobs:
           filter_mode: file
           fail_on_error: true
           flake8_args: --ignore=F401,W503 --max-line-length 119
+  cmake:
+    name: runner / cmake-format
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format
+      - name: cmake-format
+        uses: PuneetMatharu/cmake-format-lint-action@868082b20873d65687e64a4807ea342d1844c4c7
+        with:
+          args: -c .cmake-format -i
+      - name: suggester / cmake-format
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: cmake-format
+          filter_mode: file
+          fail_on_error: true
   yamllint:
     name: runner / yamllint
     runs-on: ubuntu-18.04
