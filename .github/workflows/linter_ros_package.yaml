@@ -4,6 +4,28 @@ on:
   workflow_call:
 
 jobs:
+  clang:
+    name: runner / c++
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format
+      - uses: DoozyX/clang-format-lint-action@2a28e3a8d9553f244243f7e1ff94f6685dff87be # v0.12
+        with:
+          source: "."
+          exclude: ""
+          extensions: "h,hpp,hh,hxx,c,cpp,cc,cxx"
+          clangFormatVersion: 8
+          style: file
+          inplace: true
+      - name: suggester / clang-format
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: clang-format
+          filter_mode: file
+          fail_on_error: true
   flake8-lint:
     name: runner / flake8
     runs-on: ubuntu-18.04
