@@ -26,8 +26,8 @@ jobs:
           tool_name: clang-format
           filter_mode: file
           fail_on_error: true
-  flake8-lint:
-    name: runner / flake8
+  python:
+    name: runner / python
     runs-on: ubuntu-18.04
     steps:
       - name: Check out source repository
@@ -36,7 +36,18 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "2.7"
+      - name: autopep8 format
+        uses: peter-evans/autopep8@1ba8b3249d3cf04922eecd66fc6a024072f4a7b0 # v1.2.1
+        with:
+          args: --recursive --in-place --aggressive --aggressive --max-line-length 119 .
+      - name: suggester / autopep8
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: autopep8
+          filter_mode: file
+          fail_on_error: true
       - name: flake8 Lint
+        if: always()
         uses: reviewdog/action-flake8@49cfab000299623090ddea740bbe30178ef12247 # v3.2.0
         with:
           reporter: github-pr-review
