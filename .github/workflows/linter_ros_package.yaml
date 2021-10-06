@@ -21,3 +21,18 @@ jobs:
           filter_mode: file
           fail_on_error: true
           flake8_args: --ignore=F401,W503 --max-line-length 119
+  yamllint:
+    name: runner / yamllint
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint
+      - name: yamllint
+        uses: reviewdog/action-yamllint@aabd7aef24430a8da23122ca6711faec445dfcf6 # v1.4.0
+        with:
+          reporter: github-pr-review
+          filter_mode: file
+          fail_on_error: true
+          yamllint_flags: -c .yamllint .
