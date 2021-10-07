@@ -40,3 +40,13 @@ jobs:
     name: Linter for ROS packages
     uses: sbgisen/.github/.github/workflows/linter_ros_package.yaml@main
 ```
+
+### [Release Drafter](https://github.com/release-drafter/release-drafter)
+
+This repository contains Release Drafter config file. 
+`.github/release-drafter.yml`
+
+You can call workflow, with the following:
+```
+    uses: sbgisen/.github/.github/workflows/release-drafter.yml@main
+```
