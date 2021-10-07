@@ -9,10 +9,15 @@ jobs:
     runs-on: ubuntu-18.04
     outputs:
       cpp: ${{ steps.changes.outputs.cpp }}
+      cpp_files: ${{ steps.changes.outputs.cpp_files }}
       python: ${{ steps.changes.outputs.python }}
+      python_files: ${{ steps.changes.outputs.python_files }}
       cmake: ${{ steps.changes.outputs.cmake }}
+      cmake_files: ${{ steps.changes.outputs.cmake_files }}
       yaml: ${{ steps.changes.outputs.yaml }}
+      yaml_files: ${{ steps.changes.outputs.yaml_files }}
       xml: ${{ steps.changes.outputs.xml }}
+      xml_files: ${{ steps.changes.outputs.xml_files }}
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -44,6 +49,7 @@ jobs:
               - '**/package.xml'
               - '**.xacro'
               - '**.urdf'
+          list-files: "shell"
 
   clang:
     name: runner / c++
@@ -57,7 +63,7 @@ jobs:
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format
       - uses: DoozyX/clang-format-lint-action@2a28e3a8d9553f244243f7e1ff94f6685dff87be # v0.12
         with:
-          source: "."
+          source: ${{ needs.changes.outputs.cpp_files }}
           exclude: ""
           extensions: "h,hpp,hh,hxx,c,cpp,cc,cxx"
           clangFormatVersion: 8
@@ -84,7 +90,7 @@ jobs:
       - name: autopep8 format
         uses: peter-evans/autopep8@1ba8b3249d3cf04922eecd66fc6a024072f4a7b0 # v1.2.1
         with:
-          args: --recursive --in-place --aggressive --aggressive --max-line-length 119 .
+          args: -iaa --max-line-length 119 ${{ needs.changes.outputs.python_files }}
       - name: suggester / autopep8
         uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
         with:
@@ -98,7 +104,7 @@ jobs:
           reporter: github-pr-review
           filter_mode: file
           fail_on_error: true
-          flake8_args: --ignore=F401,W503 --max-line-length 119
+          flake8_args: --ignore=F401,W503 --max-line-length 119 ${{ needs.changes.outputs.python_files }}
   cmake:
     name: runner / cmake-format
     runs-on: ubuntu-18.04
@@ -110,9 +116,9 @@ jobs:
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format
       - name: cmake-format
-        uses: PuneetMatharu/cmake-format-lint-action@868082b20873d65687e64a4807ea342d1844c4c7
-        with:
-          args: -c .cmake-format -i
+        run: |
+          pip3 install cmake-format
+          cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
       - name: suggester / cmake-format
         uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
         with:
@@ -135,7 +141,7 @@ jobs:
           reporter: github-pr-review
           filter_mode: file
           fail_on_error: true
-          yamllint_flags: -c .yamllint .
+          yamllint_flags: -c .yamllint ${{ needs.changes.outputs.yaml_files }}
   xml:
     name: runner / xml
     runs-on: ubuntu-18.04
@@ -149,9 +155,8 @@ jobs:
       - name: xmllint format
         run: |
           sudo apt install libxml2-utils
-          regex="(.*\/launch\/.*\.(launch|xml)|.*package\.xml|.*\.urdf|.*\.xacro)$"
-          find . -type f -regextype posix-egrep -regex ${regex} -print0 |\
-          xargs -0 -I {} -P8 bash -c "xmllint --format {} |\
+          echo ${{ needs.changes.outputs.xml_files }} |\
+          xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
           patch {}"
       - name: suggester / xmllint
@@ -166,7 +171,7 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd
-          files=`find . -type f -regextype posix-egrep -regex ".*\/launch\/.*\.(launch|xml)$"`
+          files=`echo ${{ needs.changes.outputs.xml_files }} | xargs -n 1 | grep -E ".*launch/.*\.(launch|xml)"`
           xmllint --noout --schema roslaunch.xsd ${files} 2>&1 1>/dev/null |\
           reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
       - name: xmllint package.xml
@@ -175,6 +180,6 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           wget http://download.ros.org/schema/package_format3.xsd
-          files=`find . -type f -regextype posix-egrep -regex ".*package.xml"`
+          files=`echo ${{ needs.changes.outputs.xml_files }} | xargs -n 1 | grep -E ".*package.xml"`
           xmllint --noout --schema package_format3.xsd ${files} 2>&1 1>/dev/null |\
           reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
