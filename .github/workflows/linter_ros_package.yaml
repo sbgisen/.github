@@ -44,8 +44,8 @@ jobs:
               - '**.yaml'
               - '**.yml'
             xml:
-              - '**/launch/**.launch'
-              - '**/launch/**.xml'
+              - '**/launch/*(*/)*.launch'
+              - '**/launch/*(*/)*.xml'
               - '**/package.xml'
               - '**.xacro'
               - '**.urdf'
