@@ -1,0 +1,185 @@
+name: lint-ros-package
+
+on:
+  workflow_call:
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-18.04
+    outputs:
+      cpp: ${{ steps.changes.outputs.cpp }}
+      cpp_files: ${{ steps.changes.outputs.cpp_files }}
+      python: ${{ steps.changes.outputs.python }}
+      python_files: ${{ steps.changes.outputs.python_files }}
+      cmake: ${{ steps.changes.outputs.cmake }}
+      cmake_files: ${{ steps.changes.outputs.cmake_files }}
+      yaml: ${{ steps.changes.outputs.yaml }}
+      yaml_files: ${{ steps.changes.outputs.yaml_files }}
+      xml: ${{ steps.changes.outputs.xml }}
+      xml_files: ${{ steps.changes.outputs.xml_files }}
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: changed-file-filter
+        id: changes
+        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 #v2.10.2
+        with:
+          filters: |
+            cpp:
+              - '**.h'
+              - '**.hpp'
+              - '**.hh'
+              - '**.hxx'
+              - '**.c'
+              - '**.cpp'
+              - '**.cc'
+              - '**.cxx'
+            python:
+              - '**.py'
+            cmake:
+              - '**/CMakeLists.txt'
+              - '**.cmake'
+            yaml:
+              - '**.yaml'
+              - '**.yml'
+            xml:
+              - '**/launch/*(*/)*.launch'
+              - '**/launch/*(*/)*.xml'
+              - '**/package.xml'
+              - '**.xacro'
+              - '**.urdf'
+          list-files: "shell"
+
+  clang:
+    name: runner / c++
+    runs-on: ubuntu-18.04
+    needs: changes
+    if: needs.changes.outputs.cpp == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format
+      - uses: DoozyX/clang-format-lint-action@2a28e3a8d9553f244243f7e1ff94f6685dff87be # v0.12
+        with:
+          source: ${{ needs.changes.outputs.cpp_files }}
+          exclude: ""
+          extensions: "h,hpp,hh,hxx,c,cpp,cc,cxx"
+          clangFormatVersion: 8
+          style: file
+          inplace: true
+      - name: suggester / clang-format
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: clang-format
+          filter_mode: file
+          fail_on_error: true
+  python:
+    name: runner / python
+    runs-on: ubuntu-18.04
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: "2.7"
+      - name: autopep8 format
+        uses: peter-evans/autopep8@1ba8b3249d3cf04922eecd66fc6a024072f4a7b0 # v1.2.1
+        with:
+          args: -iaa --max-line-length 119 ${{ needs.changes.outputs.python_files }}
+      - name: suggester / autopep8
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: autopep8
+          filter_mode: file
+          fail_on_error: true
+      - name: flake8 Lint
+        if: always()
+        uses: reviewdog/action-flake8@49cfab000299623090ddea740bbe30178ef12247 # v3.2.0
+        with:
+          reporter: github-pr-review
+          filter_mode: file
+          fail_on_error: true
+          flake8_args: --ignore=F401,W503 --max-line-length 119 ${{ needs.changes.outputs.python_files }}
+  cmake:
+    name: runner / cmake-format
+    runs-on: ubuntu-18.04
+    needs: changes
+    if: needs.changes.outputs.cmake == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format
+      - name: cmake-format
+        run: |
+          pip3 install cmake-format
+          cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
+      - name: suggester / cmake-format
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: cmake-format
+          filter_mode: file
+          fail_on_error: true
+  yamllint:
+    name: runner / yamllint
+    runs-on: ubuntu-18.04
+    needs: changes
+    if: needs.changes.outputs.yaml == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint
+      - name: yamllint
+        uses: reviewdog/action-yamllint@aabd7aef24430a8da23122ca6711faec445dfcf6 # v1.4.0
+        with:
+          reporter: github-pr-review
+          filter_mode: file
+          fail_on_error: true
+          yamllint_flags: -c .yamllint ${{ needs.changes.outputs.yaml_files }}
+  xml:
+    name: runner / xml
+    runs-on: ubuntu-18.04
+    needs: changes
+    if: needs.changes.outputs.xml == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: xmllint format
+        run: |
+          sudo apt install libxml2-utils
+          echo ${{ needs.changes.outputs.xml_files }} |\
+          xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
+          diff -B {} - |\
+          patch {}"
+      - name: suggester / xmllint
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: xmllint
+          filter_mode: file
+          fail_on_error: true
+      - name: xmllint roslaunch
+        if: always()
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd
+          files=`echo ${{ needs.changes.outputs.xml_files }} | xargs -n 1 | grep -E ".*launch/.*\.(launch|xml)"`
+          xmllint --noout --schema roslaunch.xsd ${files} 2>&1 1>/dev/null |\
+          reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
+      - name: xmllint package.xml
+        if: always()
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          wget http://download.ros.org/schema/package_format3.xsd
+          files=`echo ${{ needs.changes.outputs.xml_files }} | xargs -n 1 | grep -E ".*package.xml"`
+          xmllint --noout --schema package_format3.xsd ${files} 2>&1 1>/dev/null |\
+          reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
