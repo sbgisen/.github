@@ -1,0 +1,12 @@
+name: Release Drafter CI
+on:
+  workflow_call:
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-latest
+    steps:
+      # Drafts your next Release notes as Pull Requests are merged into "master"
+      - uses: release-drafter/release-drafter@fe52e97d262833ae07d05efaf1a239df3f1b5cd4 #v5.15.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
