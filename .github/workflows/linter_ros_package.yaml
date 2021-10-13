@@ -161,7 +161,7 @@ jobs:
           file_list=${{ needs.changes.outputs.xml_files }}
           files=`echo ${file_list} | xargs -n 1 | grep -E ".*launch/.*\.(launch|xml)" || true`
           if [ -z ${files} ]; then
-            echo "There is not launch files."
+            echo "There are no launch files."
           else
             xmllint --noout --schema roslaunch.xsd ${files} 2>&1 1>/dev/null |\
             reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
@@ -174,7 +174,7 @@ jobs:
           wget http://download.ros.org/schema/package_format2.xsd
           files=`echo ${{ needs.changes.outputs.xml_files }} | xargs -n 1 | grep -E ".*package.xml" || true`
           if [ -z ${files} ]; then
-            echo "There is not package.xml files."
+            echo "There are no package.xml files."
           else
             xmllint --noout --schema package_format2.xsd ${files} 2>&1 1>/dev/null |\
             reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
