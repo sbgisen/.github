@@ -1,0 +1,5 @@
+{
+    "name": "Release Drafter and Linters workflow",
+    "description": "Release Drafter and Liter ROS packages CI workflow template.",
+    "iconName": "ci"
+}
