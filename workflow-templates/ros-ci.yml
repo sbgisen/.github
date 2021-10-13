@@ -1,0 +1,14 @@
+on:
+  push:
+    branches: [$default-branch]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  linter:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Linter
+    uses: sbgisen/.github/.github/workflows/linter_ros_package.yaml@main
+  release-drafter:
+    name: Release drafter
+    uses: sbgisen/.github/.github/workflows/release-drafter.yml@main
