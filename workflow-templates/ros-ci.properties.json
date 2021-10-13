@@ -1,4 +1,5 @@
 {
     "name": "ROS Packages Workflow",
-    "description": "workflow template for ROS packages."
+    "description": "workflow template for ROS packages.",
+    "iconName": "ros-ci"
 }
