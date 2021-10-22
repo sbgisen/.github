@@ -1,0 +1,96 @@
+name: ros-build-from-scratch
+
+on:
+  workflow_call:
+    secrets:
+      ssh_key:
+        required: true
+      known_hosts:
+        required: true
+    inputs:
+      install_libfreenect2:
+        default: false
+        required: false
+        type: boolean
+      run_test:
+        default: false
+        required: false
+        type: boolean
+      runs_on:
+        default: ubuntu-latest
+        required: false
+        type: string
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ inputs.runs_on }}
+    container:
+      image: ros:melodic
+    steps:
+      - name: Install ssh client
+        run: |
+          apt-get update
+          apt-get install -y openssh-client
+      - name: setup ssh key
+        uses: shimataro/ssh-key-action@3c9b0fc6f2d223b8450b02a0445f526350fc73e0 # v2.3.1
+        with:
+          key: ${{ secrets.ssh_key }}
+          known_hosts: ${{ secrets.known_hosts }}
+      - name: Check out source repository
+        uses: actions/checkout@v2
+        with:
+          path: ros/src/${{ github.event.repository.name }}
+      - name: Download repositories managed by wstool
+        run: |
+          wstool init .
+          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
+          while [ `echo ${files} | wc -w` -gt 0 ]
+          do
+            echo ${files} | xargs -n1 wstool merge -y -t .
+            wstool up -t . -j4 -v
+            rm ${files}
+            files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
+          done
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src
+      - name: Install rosdep packages
+        run: |
+          rosdep update
+          rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+      - name: Install libfreenect2
+        if: inputs.install_libfreenect2
+        run: |
+          apt-get install -y build-essential cmake pkg-config libusb-1.0-0-dev libturbojpeg0-dev libglfw3-dev checkinstall
+          if dpkg -l libfreenect2; then
+            echo "Already installed"
+          else
+            git clone https://github.com/OpenKinect/libfreenect2.git
+            cd libfreenect2
+            mkdir build && cd build
+            cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+            make
+            checkinstall -y --pkgname="libfreenect2"
+          fi
+        working-directory: ${{ github.workspace }}
+      - name: Build ros packages
+        run: |
+          apt-get install -y python-catkin-tools
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          catkin init
+          catkin config --extend /opt/ros/${ROS_DISTRO}
+          catkin config --no-blacklist
+          catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          catkin build -s --no-status
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+      - name: Run test
+        if: inputs.run_test
+        run: |
+          source devel/setup.bash
+          catkin run_tests -i --no-deps --no-status ${{ github.event.repository.name }}
+          catkin_test_results --verbose --all build || (trap - ERR && exit 1)
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
