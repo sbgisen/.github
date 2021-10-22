@@ -1,0 +1,71 @@
+name: ros-test
+
+on:
+  workflow_call:
+    inputs:
+      install_libfreenect2:
+        default: false
+        required: false
+        type: boolean
+
+jobs:
+  test:
+    name: Run test
+    runs-on: [self-hosted, lab]
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+        with:
+          path: ros/src/${{ github.event.repository.name }}
+      - name: Download repositories managed by wstool
+        run: |
+          wstool init .
+          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
+          while [ `echo ${files} | wc -w` -gt 0 ]
+          do
+            echo ${files} | xargs -n1 wstool merge -y -t .
+            wstool up -t . -j4 -v
+            rm ${files}
+            files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
+          done
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src
+      - name: Install rosdep packages
+        run: |
+          rosdep update
+          rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+      - name: Install libfreenect2
+        if: inputs.install_libfreenect2
+        run: |
+          apt-get install -y build-essential cmake pkg-config libusb-1.0-0-dev libturbojpeg0-dev libglfw3-dev checkinstall
+          if dpkg -l libfreenect2; then
+            echo "Already installed"
+          else
+            git clone https://github.com/OpenKinect/libfreenect2.git
+            cd libfreenect2
+            mkdir build && cd build
+            cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+            make
+            checkinstall -y --pkgname="libfreenect2"
+          fi
+        working-directory: ${{ github.workspace }}
+      - name: Build ros packages
+        run: |
+          apt-get install -y python-catkin-tools
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          catkin init
+          catkin config --extend /opt/ros/${ROS_DISTRO}
+          catkin config --no-blacklist
+          catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          catkin build -s --no-status
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+      - name: Run test
+        run: |
+          source devel/setup.bash
+          catkin run_tests -i --no-deps --no-status ${{ github.event.repository.name }}
+          catkin_test_results --verbose --all build || (trap - ERR && exit 1)
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
