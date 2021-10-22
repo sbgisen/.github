@@ -50,3 +50,77 @@ You can call workflow, with the following:
 ```
     uses: sbgisen/.github/.github/workflows/release-drafter.yml@main
 ```
+
+### Build ROS package on docker
+
+`ros-build.yml` can be verified that the build of the ROS package located in the repository passes.
+
+#### Input parameters
+
+- secrets.ssh_key
+
+  Use to execute `wstool`.
+  Set private SSH key to secrets on the repository/organization.
+
+- secrets.known_hosts
+
+  Use to execute `wstool`.
+  Set the result of `ssh-keyscan github.com` to secrets on the repository/organization.
+
+- inputs.install_libfreenect2 (Optional)
+
+  Whether the workflow install libfreenect2.
+  Default is `false`.
+
+- inputs.run_test (Optional)
+
+  Whether the workflow run rostest.
+  Default is `false`.
+
+- inputs.runs_on (Optional)
+
+  Select environment.
+  Default is `ubuntu-latest`.
+  To use self hosted runner, set tags to this parameter such as `[self-hosted, lab]`
+
+#### Usage
+
+You can call workflow, with the following:
+
+```yaml
+jobs:
+  Build_ROS_package:
+    name: Build ROS package
+    uses: sbgisen/.github/.github/workflows/ros-build.yml@main
+    secrets:
+      ssh_key: ${{ secrets.SSH_KEY }}
+      known_hosts: ${{ secrets.KNOWN_HOSTS }}
+    with:
+      install_libfreenect2: false
+      run_test: false
+      runs_on: ubuntu-latest
+```
+
+### Run ROS test
+
+`ros-test.yml` can run ros test.
+
+#### Input parameters
+
+- inputs.install_libfreenect2 (Optional)
+
+  Whether the workflow install libfreenect2.
+  Default is `false`.
+
+#### Usage
+
+You can call workflow, with the following:
+
+```yaml
+jobs:
+  Run_ROS_test:
+    name: Run ROS test
+    uses: sbgisen/.github/.github/workflows/ros-test.yml@main
+    with:
+      install_libfreenect2: false
+```
