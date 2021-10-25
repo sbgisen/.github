@@ -12,6 +12,8 @@ jobs:
   test:
     name: Run test
     runs-on: [self-hosted, lab]
+    env:
+      ROS_DISTRO: melodic
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
