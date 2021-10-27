@@ -9,6 +9,17 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     name: Linter
     uses: sbgisen/.github/.github/workflows/linter_ros_package.yaml@main
+  build:
+    needs: linter
+    name: Build
+    uses: sbgisen/.github/.github/workflows/ros-build.yml@main
+    secrets:
+      ssh_key: ${{ secrets.SSH_KEY }}
+      known_hosts: ${{ secrets.KNOWN_HOSTS }}
+  test:
+    needs: linter
+    name: Test
+    uses: sbgisen/.github/.github/workflows/ros-test.yml@main
   release-drafter:
     name: Release drafter
     uses: sbgisen/.github/.github/workflows/release-drafter.yml@main
