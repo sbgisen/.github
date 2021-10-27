@@ -114,7 +114,9 @@ jobs:
 
 #### Usage
 
-You can call workflow, with the following:
+1. Please add [self-hosted-runner](https://docs.github.com/ja/actions/hosting-your-own-runners/adding-self-hosted-runners) to the repository/organization to use this job.
+    - The job is run on the self hosted server with `self-hosted` and `lab` labels.
+1. You can call workflow, with the following:
 
 ```yaml
 jobs:
