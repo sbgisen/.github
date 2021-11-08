@@ -158,7 +158,7 @@ jobs:
         run: |
           sudo apt install libxml2-utils
           wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd
-          file_list=${{ needs.changes.outputs.xml_files }}
+          file_list="${{ needs.changes.outputs.xml_files }}"
           files=`echo ${file_list} | xargs -n 1 | grep -E ".*launch/.*\.(launch|xml)" || true`
           if [ -z ${files} ]; then
             echo "There are no launch files."
