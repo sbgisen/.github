@@ -83,6 +83,12 @@ You can call workflow, with the following:
   Default is `ubuntu-latest`.
   To use self hosted runner, set tags to this parameter such as `[self-hosted, lab]`
 
+- inputs.setup_script (Optional)
+
+  Setup script filename.
+  Default is empty.
+  To install/setup dependencies not supported by `wstool` or `rosdep`.
+
 #### Usage
 
 You can call workflow, with the following:
@@ -111,6 +117,12 @@ jobs:
 
   Whether the workflow install libfreenect2.
   Default is `false`.
+
+- inputs.setup_script (Optional)
+
+  Setup script filename.
+  Default is empty.
+  To install/setup dependencies not supported by `wstool` or `rosdep`.
 
 #### Usage
 
