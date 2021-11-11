@@ -7,6 +7,9 @@ on:
         default: false
         required: false
         type: boolean
+      setup_script:
+        required: false
+        type: string
 
 jobs:
   test:
@@ -40,6 +43,13 @@ jobs:
           rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
         shell: bash
         working-directory: ${{ github.workspace }}/ros
+      - name: Run setup script
+        run: |
+          if [ "${{ inputs.setup_script }}" != "" ]; then
+            ./${{ inputs.setup_script }}
+          fi
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
       - name: Install libfreenect2
         if: inputs.install_libfreenect2
         run: |
