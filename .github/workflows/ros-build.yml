@@ -63,6 +63,10 @@ jobs:
           rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
         shell: bash
         working-directory: ${{ github.workspace }}/ros
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@1ed7eb5b4b2afeceab143d0caa0d7fa87c33047b # v1.0.5
+        with:
+          max-size: 100M
       - name: Run setup script
         run: |
           if [ "${{ inputs.setup_script }}" != "" ]; then
@@ -89,6 +93,7 @@ jobs:
         run: |
           apt-get install -y python-catkin-tools
           source /opt/ros/${ROS_DISTRO}/setup.bash
+          export PATH="/usr/lib/ccache:$PATH"
           catkin init
           catkin config --extend /opt/ros/${ROS_DISTRO}
           catkin config --no-blacklist
