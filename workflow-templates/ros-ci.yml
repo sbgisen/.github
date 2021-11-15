@@ -11,13 +11,15 @@ jobs:
     uses: sbgisen/.github/.github/workflows/linter_ros_package.yaml@main
   build:
     needs: linter
+    if: ${{ !failure() }}
     name: Build
     uses: sbgisen/.github/.github/workflows/ros-build.yml@main
     secrets:
-      ssh_key: ${{ secrets.SSH_KEY }}
+      ssh_key: ${{ secrets.GISEN_ROBO_GIT }}
       known_hosts: ${{ secrets.KNOWN_HOSTS }}
   test:
     needs: linter
+    if: ${{ !failure() }}
     name: Test
     uses: sbgisen/.github/.github/workflows/ros-test.yml@main
   release-drafter:
