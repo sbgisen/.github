@@ -71,6 +71,9 @@ jobs:
         working-directory: ${{ github.workspace }}
       - name: Build ros packages
         run: |
+          if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
+            exit 0
+          fi
           sudo apt-get install -y python-catkin-tools
           source /opt/ros/${ROS_DISTRO}/setup.bash
           catkin init
@@ -82,6 +85,9 @@ jobs:
         working-directory: ${{ github.workspace }}/ros
       - name: Run test
         run: |
+          if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
+            exit 0
+          fi
           source devel/setup.bash
           catkin run_tests -i --no-deps --no-status ${{ inputs.package_name }}
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
