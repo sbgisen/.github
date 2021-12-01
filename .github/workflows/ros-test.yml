@@ -3,6 +3,10 @@ name: ros-test
 on:
   workflow_call:
     inputs:
+      package_name:
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
       install_libfreenect2:
         default: false
         required: false
@@ -67,19 +71,25 @@ jobs:
         working-directory: ${{ github.workspace }}
       - name: Build ros packages
         run: |
+          if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
+            exit 0
+          fi
           sudo apt-get install -y python-catkin-tools
           source /opt/ros/${ROS_DISTRO}/setup.bash
           catkin init
           catkin config --extend /opt/ros/${ROS_DISTRO}
           catkin config --no-blacklist
           catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          catkin build -s --no-status
+          catkin build -s --no-status ${{ inputs.package_name }}
         shell: bash
         working-directory: ${{ github.workspace }}/ros
       - name: Run test
         run: |
+          if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
+            exit 0
+          fi
           source devel/setup.bash
-          catkin run_tests -i --no-deps --no-status ${{ github.event.repository.name }}
+          catkin run_tests -i --no-deps --no-status ${{ inputs.package_name }}
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
         shell: bash
         working-directory: ${{ github.workspace }}/ros

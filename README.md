@@ -67,6 +67,11 @@ You can call workflow, with the following:
   Use to execute `wstool`.
   Set the result of `ssh-keyscan github.com` to secrets on the repository/organization.
 
+- inputs.package_name (Optional)
+
+  ROS package name.
+  Default is `github.event.repository.name`.
+
 - inputs.install_libfreenect2 (Optional)
 
   Whether the workflow install libfreenect2.
@@ -112,6 +117,11 @@ jobs:
 `ros-test.yml` can run ros test.
 
 #### Input parameters
+
+- inputs.package_name (Optional)
+
+  ROS package name.
+  Default is `github.event.repository.name`.
 
 - inputs.install_libfreenect2 (Optional)
 
