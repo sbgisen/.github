@@ -137,6 +137,7 @@ jobs:
           cat ../../build/*/compile_commands.json > ../../build/compile_commands.json
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
+          echo "------------------------ Run Clang-tidy ------------------------"
           result=`clang-tidy-13 --quiet ${{ steps.changes.outputs.cpp_files }}`
           if [[ -z ${result} ]]; then
             exit 0
