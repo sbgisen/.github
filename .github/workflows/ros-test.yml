@@ -138,7 +138,8 @@ jobs:
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
           echo "------------------------ Run Clang-tidy ------------------------"
-          result=`clang-tidy-13 --quiet ${{ steps.changes.outputs.cpp_files }}`
+          result=`clang-tidy-13 --quiet ${{ steps.changes.outputs.cpp_files }} \
+          --header-filter="${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/include/.*"`
           if [[ -z ${result} ]]; then
             exit 0
           fi
