@@ -127,7 +127,7 @@ jobs:
         run: |
           pip3 install catkin_lint rosdep
           source ../../devel/setup.bash
-          catkin_lint ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+          catkin_lint .
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
       - name: Download clang tidy config
