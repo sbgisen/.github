@@ -26,16 +26,15 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ros/src/${{ github.event.repository.name }}
-      - name: Download repositories managed by wstool
+      - name: Download repositories managed by vcstool
         run: |
-          if [ ! -e .rosinstall ]; then
-            wstool init .
+          if !(type vcs > /dev/null 2>&1); then
+              sudo apt update && sudo apt install -y python3-vcstool
           fi
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
           while [ `echo ${files} | wc -w` -gt 0 ]
           do
-            echo ${files} | xargs -n1 wstool merge -y -t .
-            wstool up -t . -j4 -v
+            echo ${files} | xargs -n1 vcs import --recursive --debug --input
             rm ${files}
             files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
           done
