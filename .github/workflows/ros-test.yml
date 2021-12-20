@@ -95,6 +95,7 @@ jobs:
 
   lint_after_build:
     name: Lint after build
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: [self-hosted, lab]
     needs: test
     env:
