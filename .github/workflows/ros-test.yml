@@ -106,14 +106,14 @@ jobs:
         with:
           filters: |
             cpp:
-              - '**.h'
-              - '**.hpp'
-              - '**.hh'
-              - '**.hxx'
-              - '**.c'
-              - '**.cpp'
-              - '**.cc'
-              - '**.cxx'
+              - added|modified: '**.h'
+              - added|modified: '**.hpp'
+              - added|modified: '**.hh'
+              - added|modified: '**.hxx'
+              - added|modified: '**.c'
+              - added|modified: '**.cpp'
+              - added|modified: '**.cc'
+              - added|modified: '**.cxx'
           list-files: "shell"
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
