@@ -27,28 +27,28 @@ jobs:
         with:
           filters: |
             cpp:
-              - '**.h'
-              - '**.hpp'
-              - '**.hh'
-              - '**.hxx'
-              - '**.c'
-              - '**.cpp'
-              - '**.cc'
-              - '**.cxx'
+              - added|modified: '**.h'
+              - added|modified: '**.hpp'
+              - added|modified: '**.hh'
+              - added|modified: '**.hxx'
+              - added|modified: '**.c'
+              - added|modified: '**.cpp'
+              - added|modified: '**.cc'
+              - added|modified: '**.cxx'
             python:
-              - '**.py'
+              - added|modified: '**.py'
             cmake:
-              - '**/CMakeLists.txt'
-              - '**.cmake'
+              - added|modified: '**/CMakeLists.txt'
+              - added|modified: '**.cmake'
             yaml:
-              - '**.yaml'
-              - '**.yml'
+              - added|modified: '**.yaml'
+              - added|modified: '**.yml'
             xml:
-              - '**/launch/*(*/)*.launch'
-              - '**/launch/*(*/)*.xml'
-              - '**/package.xml'
-              - '**.xacro'
-              - '**.urdf'
+              - added|modified: '**/launch/*(*/)*.launch'
+              - added|modified: '**/launch/*(*/)*.xml'
+              - added|modified: '**/package.xml'
+              - added|modified: '**.xacro'
+              - added|modified: '**.urdf'
           list-files: "shell"
 
   clang:
