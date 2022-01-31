@@ -87,24 +87,29 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "2.7"
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.flake8
       - name: autopep8 format
         uses: peter-evans/autopep8@1ba8b3249d3cf04922eecd66fc6a024072f4a7b0 # v1.2.1
         with:
-          args: -iaa --max-line-length 119 ${{ needs.changes.outputs.python_files }}
+          args: -i ${{ needs.changes.outputs.python_files }}
       - name: suggester / autopep8
         uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
         with:
           tool_name: autopep8
           filter_mode: file
           fail_on_error: true
-      - name: flake8 Lint
-        if: always()
-        uses: reviewdog/action-flake8@49cfab000299623090ddea740bbe30178ef12247 # v3.2.0
-        with:
-          reporter: github-pr-review
-          filter_mode: file
-          fail_on_error: true
-          flake8_args: --ignore=F401,W503 --max-line-length 119 ${{ needs.changes.outputs.python_files }}
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: flake8 lint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          pip2 install pep8-naming flake8-coding flake8-copyright
+          flake8 --version
+          file_list="${{ needs.changes.outputs.python_files }}"
+          flake8 --accept-encodings=utf-8 ${file_list} |\
+          reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file -fail-on-error
   cmake:
     name: runner / cmake-format
     runs-on: ubuntu-18.04
