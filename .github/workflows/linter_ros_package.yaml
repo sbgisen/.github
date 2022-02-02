@@ -88,7 +88,7 @@ jobs:
         with:
           python-version: "2.7"
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.flake8
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
       - name: autopep8 format
         uses: peter-evans/autopep8@1ba8b3249d3cf04922eecd66fc6a024072f4a7b0 # v1.2.1
         with:
