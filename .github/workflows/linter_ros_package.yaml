@@ -114,15 +114,17 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.x"
-      - name: Lint isort # ref #53
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+      - name: isort # ref #53
         run: |
-          pip3 install flake8-isort
-          flake8 --version
+          pip3 install isort
           file_list="${{ needs.changes.outputs.python_files }}"
-          flake8 --select=I ${file_list} |\
-          reviewdog -name="docstring" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file -fail-on-error
+          isort ${file_list}
+      - name: suggester / isort
+        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        with:
+          tool_name: isort
+          filter_mode: file
+          fail_on_error: true
       - name: Lint docstrings
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
