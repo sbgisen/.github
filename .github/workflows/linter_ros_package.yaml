@@ -130,7 +130,7 @@ jobs:
           pip3 install flake8-docstrings
           flake8 --version
           file_list="${{ needs.changes.outputs.python_files }}"
-          flake8 ${file_list} |\
+          flake8 --select=D ${file_list} |\
           reviewdog -name="docstring" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file
 
   cmake:
