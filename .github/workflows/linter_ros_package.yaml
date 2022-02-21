@@ -171,7 +171,7 @@ jobs:
           reporter: github-pr-review
           filter_mode: file
           fail_on_error: true
-          yamllint_flags: -c .yamllint ${{ needs.changes.outputs.yaml_files }}
+          yamllint_flags: -s -c .yamllint ${{ needs.changes.outputs.yaml_files }}
   xml:
     name: runner / xml
     runs-on: ubuntu-18.04
