@@ -27,13 +27,17 @@ on:
       setup_script:
         required: false
         type: string
+      ros_distro:
+        default: melodic
+        required: false
+        type: string
 
 jobs:
   build:
     name: Build
     runs-on: ${{ inputs.runs_on }}
     container:
-      image: ros:melodic
+      image: ros:${{ inputs.ros_distro }}
     steps:
       - name: Install ssh client
         run: |
