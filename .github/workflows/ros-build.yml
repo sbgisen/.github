@@ -59,7 +59,7 @@ jobs:
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
-              apt update && apt install -y python3-vcstool
+              apt update && apt install -y python3-vcstool git
           fi
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
           while [ `echo ${files} | wc -w` -gt 0 ]
