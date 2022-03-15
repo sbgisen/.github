@@ -112,7 +112,11 @@ jobs:
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
             exit 0
           fi
-          apt-get install -y python-catkin-tools
+          if [ ${ROS_DISTRO} == melodic ]; then
+            apt-get install -y python-catkin-tools
+          else
+            apt-get install -y python3-catkin-tools
+          fi
           source /opt/ros/${ROS_DISTRO}/setup.bash
           export PATH="/usr/lib/ccache:$PATH"
           catkin init
