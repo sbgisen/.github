@@ -32,6 +32,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ inputs.runs_on }}
+    timeout-minutes: 60
     container:
       image: ros:melodic
     steps:
@@ -39,15 +40,18 @@ jobs:
         run: |
           apt-get update
           apt-get install -y openssh-client
+        timeout-minutes: 1
       - name: setup ssh key
         uses: shimataro/ssh-key-action@3c9b0fc6f2d223b8450b02a0445f526350fc73e0 # v2.3.1
         with:
           key: ${{ secrets.ssh_key }}
           known_hosts: ${{ secrets.known_hosts }}
+        timeout-minutes: 1
       - name: Check out source repository
         uses: actions/checkout@v2
         with:
           path: ros/src/${{ github.event.repository.name }}
+        timeout-minutes: 1
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
@@ -62,16 +66,19 @@ jobs:
           done
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src
+        timeout-minutes: 5
       - name: Install rosdep packages
         run: |
           rosdep update
           rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
         shell: bash
         working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 15
       - name: ccache
         uses: hendrikmuhs/ccache-action@1ed7eb5b4b2afeceab143d0caa0d7fa87c33047b # v1.0.5
         with:
           max-size: 100M
+        timeout-minutes: 1
       - name: Run setup script
         run: |
           if [ "${{ inputs.setup_script }}" != "" ]; then
@@ -79,6 +86,7 @@ jobs:
           fi
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+        timeout-minutes: 30
       - name: Install libfreenect2
         if: inputs.install_libfreenect2
         run: |
@@ -94,6 +102,7 @@ jobs:
             checkinstall -y --pkgname="libfreenect2"
           fi
         working-directory: ${{ github.workspace }}
+        timeout-minutes: 3
       - name: Build ros packages
         run: |
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
@@ -109,6 +118,7 @@ jobs:
           catkin build -s --no-status ${{ inputs.package_name }}
         shell: bash
         working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 30
       - name: Run test
         if: inputs.run_test
         run: |
@@ -120,3 +130,4 @@ jobs:
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
         shell: bash
         working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 30

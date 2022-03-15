@@ -7,6 +7,7 @@ jobs:
   changes:
     name: changes
     runs-on: ubuntu-18.04
+    timeout-minutes: 1
     outputs:
       cpp: ${{ steps.changes.outputs.cpp }}
       cpp_files: ${{ steps.changes.outputs.cpp_files }}
@@ -54,6 +55,7 @@ jobs:
   clang:
     name: runner / c++
     runs-on: ubuntu-18.04
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.cpp == 'true'
     steps:
@@ -78,6 +80,7 @@ jobs:
   python:
     name: runner / python
     runs-on: ubuntu-18.04
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.python == 'true'
     steps:
@@ -138,6 +141,7 @@ jobs:
   cmake:
     name: runner / cmake-format
     runs-on: ubuntu-18.04
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.cmake == 'true'
     steps:
@@ -158,6 +162,7 @@ jobs:
   yamllint:
     name: runner / yamllint
     runs-on: ubuntu-18.04
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.yaml == 'true'
     steps:
@@ -175,6 +180,7 @@ jobs:
   xml:
     name: runner / xml
     runs-on: ubuntu-18.04
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.xml == 'true'
     steps:
