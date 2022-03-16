@@ -27,6 +27,10 @@ on:
       setup_script:
         required: false
         type: string
+      ros_distro:
+        default: melodic
+        required: false
+        type: string
 
 jobs:
   build:
@@ -34,12 +38,12 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     timeout-minutes: 60
     container:
-      image: ros:melodic
+      image: ros:${{ inputs.ros_distro }}
     steps:
-      - name: Install ssh client
+      - name: Install necessary apt packages
         run: |
           apt-get update
-          apt-get install -y openssh-client
+          DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client keyboard-configuration
         timeout-minutes: 1
       - name: setup ssh key
         uses: shimataro/ssh-key-action@3c9b0fc6f2d223b8450b02a0445f526350fc73e0 # v2.3.1
@@ -55,7 +59,7 @@ jobs:
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
-              apt update && apt install -y python3-vcstool
+              apt update && apt install -y python3-vcstool git
           fi
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
           while [ `echo ${files} | wc -w` -gt 0 ]
@@ -108,7 +112,11 @@ jobs:
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
             exit 0
           fi
-          apt-get install -y python-catkin-tools
+          if [ ${ROS_DISTRO} == melodic ]; then
+            apt-get install -y python-catkin-tools
+          else
+            apt-get install -y python3-catkin-tools
+          fi
           source /opt/ros/${ROS_DISTRO}/setup.bash
           export PATH="/usr/lib/ccache:$PATH"
           catkin init
