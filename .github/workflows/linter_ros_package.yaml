@@ -193,6 +193,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
+          sudo apt update
           sudo apt install libxml2-utils
           wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd
           file_list="${{ needs.changes.outputs.xml_files }}"
@@ -218,7 +219,6 @@ jobs:
           fi
       - name: xmllint format
         run: |
-          sudo apt install libxml2-utils
           echo ${{ needs.changes.outputs.xml_files }} |\
           xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
