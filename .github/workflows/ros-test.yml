@@ -98,7 +98,7 @@ jobs:
           source devel/setup.bash
           catkin run_tests -i --no-deps --no-status ${{ inputs.package_name }}
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
-        shell: bash
+        shell: bash -leo pipefail {0}
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 60
 
