@@ -61,7 +61,8 @@ jobs:
       - name: Install libfreenect2
         if: inputs.install_libfreenect2
         run: |
-          sudo apt-get install -y build-essential cmake pkg-config libusb-1.0-0-dev libturbojpeg0-dev libglfw3-dev checkinstall
+          sudo apt-get install -y build-essential cmake pkg-config libusb-1.0-0-dev \
+          libturbojpeg0-dev libglfw3-dev checkinstall
           if dpkg -l libfreenect2; then
             echo "Already installed"
           else
@@ -97,7 +98,7 @@ jobs:
           source devel/setup.bash
           catkin run_tests -i --no-deps --no-status ${{ inputs.package_name }}
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
-        shell: bash
+        shell: bash -leo pipefail {0}
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 60
 
@@ -112,7 +113,7 @@ jobs:
     steps:
       - name: changed-file-filter
         id: changes
-        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 #v2.10.2
+        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 # v2.10.2
         with:
           filters: |
             cpp:
