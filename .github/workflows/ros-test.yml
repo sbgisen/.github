@@ -36,7 +36,7 @@ jobs:
         timeout-minutes: 1
       - name: Upgrade apt packages
         run: |
-          apt update && apt upgrade -y
+          sudo apt update && sudo apt upgrade -y
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
