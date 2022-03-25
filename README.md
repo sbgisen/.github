@@ -99,6 +99,11 @@ You can call workflow, with the following:
   Specify relative paths from `/path/to/workspace/src` as in `./ros-package/.rosinstall`, separated by commas.
   Default is empty.
 
+- inputs.ros_distro (Optional)
+
+  Specify ROS distribution.
+  Default is `melodic`.
+
 #### Usage
 
 You can call workflow, with the following:
