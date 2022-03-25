@@ -14,6 +14,12 @@ on:
       setup_script:
         required: false
         type: string
+      ignore_rosinstalls:
+        default: ""
+        required: false
+        type: string
+        description: "Specify relative paths from /path/to/workspace/src as in
+          ./ros-package/.rosinstall, separated by commas."
 
 jobs:
   test:
@@ -36,12 +42,27 @@ jobs:
           if !(type vcs > /dev/null 2>&1); then
               sudo apt update && sudo apt install -y python3-vcstool
           fi
-          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
-          while [ `echo ${files} | wc -w` -gt 0 ]
+
+          not_contains() {
+              [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && exit 1 || exit 0
+          }
+
+          IFS=', ' read -ra ignore_files <<< "${{ inputs.ignore_rosinstalls }}"
+          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+          pre_n=0
+          n=`echo ${files} | wc -w`
+          while [ `comm -3 <(echo ${files}) <(echo ${ignore_files[@]} | sort) | wc -w` -ne 0 -a ${n} -ne ${pre_n} ]
           do
-            echo ${files} | xargs -n1 vcs import --recursive --debug --input
-            rm ${files}
-            files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall"`
+              for f in ${files}
+              do
+                  if `not_contains ${f} ${ignore_files}`; then
+                      vcs import --recursive --debug < ${f}
+                      ignore_files+=(${f})
+                  fi
+              done
+              files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+              pre_n=${n}
+              n=`echo ${files} | wc -w`
           done
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src
