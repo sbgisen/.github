@@ -28,6 +28,9 @@ jobs:
         with:
           path: ros/src/${{ github.event.repository.name }}
         timeout-minutes: 1
+      - name: Upgrade apt packages
+        run: |
+          apt update && apt upgrade -y
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
