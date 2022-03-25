@@ -94,6 +94,11 @@ You can call workflow, with the following:
   Default is empty.
   To install/setup dependencies not supported by `wstool` or `rosdep`.
 
+- inputs.ignore_rosinstalls (Optional)
+
+  Specify relative paths from `/path/to/workspace/src` as in `./ros-package/.rosinstall`, separated by commas.
+  Default is empty.
+
 #### Usage
 
 You can call workflow, with the following:
@@ -133,6 +138,11 @@ jobs:
   Setup script filename.
   Default is empty.
   To install/setup dependencies not supported by `wstool` or `rosdep`.
+
+- inputs.ignore_rosinstalls (Optional)
+
+  Specify relative paths from `/path/to/workspace/src` as in `./ros-package/.rosinstall`, separated by commas.
+  Default is empty.
 
 #### Usage
 
