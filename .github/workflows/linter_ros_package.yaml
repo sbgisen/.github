@@ -215,11 +215,14 @@ jobs:
           else
             wget http://download.ros.org/schema/package_format2.xsd
             wget http://download.ros.org/schema/package_format3.xsd
+            lint_result=/tmp/xmllint
             for file in ${files}
             do
               format_version=`cat $file | sed -En 's/<package format="(.*)">/\1/p'`
               xmllint --noout --schema package_format${format_version}.xsd $file 2>>${lint_result} | true
             done
+            cat ${lint_result} |\
+            reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l:%m' -filter-mode=file -fail-on-error
           fi
       - name: xmllint format
         run: |
