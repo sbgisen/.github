@@ -166,7 +166,8 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
-      - name: Install sphinx dependencies
+      - name: Generate documentations
+        id: generate_documents
         run: |
           if [ `find . -wholename ./docs/_sources/conf.py | wc -l` -eq 0 ]; then
             exit 0
@@ -177,24 +178,17 @@ jobs:
           if [ `find . -wholename ./docs/_sources/requirements.txt | wc -l` -eq 1 ]; then
             pip2 install -r docs/_sources/requirements.txt
           fi
-        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
-      - name: Generate documentations
-        id: generate_documents
-        run: |
-          if [ `find . -wholename ./docs/_sources/conf.py | wc -l` -eq 0 ]; then
-            exit 0
-          fi
           source ../../devel/setup.bash
           sphinx-apidoc -f -e -o docs/_sources ${{ inputs.doc_module_path }}
           sphinx-build docs/_sources docs/
           echo "::set-output name=file_exists::$(find . -wholename ./docs/py-modindex.html | wc -l)"
-        shell: bash -leo pipefail {0}
+        shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
       - name: Publish documentations
         uses: peaceiris/actions-gh-pages@v3
         if: steps.generate_documents.outputs.file_exists == 1 && github.event.repository.default_branch == github.ref_name
         with:
           publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ github.token }}
           publish_dir: ros/src/${{ github.event.repository.name }}/docs
           force_orphan: true
