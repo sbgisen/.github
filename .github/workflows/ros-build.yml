@@ -37,6 +37,11 @@ on:
         default: melodic
         required: false
         type: string
+      doc_module_path:
+        default: src/${{ github.event.repository.name }}
+        required: false
+        type: string
+        description: "Specify module path for sphinx-apidoc."
 
 jobs:
   build:
@@ -161,3 +166,26 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
+      - name: Install sphinx dependencies
+        run: |
+          if [ `find . -wholename ./docs/_sources/conf.py | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          apt-get install -y python-pip
+          pip2 install sphinx==1.8.6
+          pip2 install bs4
+          if [ `find . -wholename ./docs/_sources/requirements.txt | wc -l` -eq 1 ]; then
+            pip2 install -r docs/_sources/requirements.txt
+          fi
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+      - name: Generate documentations
+        id: generate_documents
+        run: |
+          if [ `find . -wholename ./docs/_sources/conf.py | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          source ../../devel/setup.bash
+          sphinx-apidoc -f -e -o docs/_sources ${{ inputs.doc_module_path }}
+          sphinx-build docs/_sources docs/
+        shell: bash -leo pipefail {0}
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
