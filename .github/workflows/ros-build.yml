@@ -164,7 +164,7 @@ jobs:
       - name: Generate documentations
         id: generate_documents
         run: |
-          if [ -f "./docs/_sources/conf.py" ]; then
+          if [ ! -f "./docs/_sources/conf.py" ]; then
             exit 0
           fi
           if [ ${ROS_DISTRO} == melodic ]; then
