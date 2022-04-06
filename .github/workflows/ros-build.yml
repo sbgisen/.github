@@ -37,11 +37,6 @@ on:
         default: melodic
         required: false
         type: string
-      doc_module_path:
-        default: src/${{ github.event.repository.name }}
-        required: false
-        type: string
-        description: "Specify module path for sphinx-apidoc."
 
 jobs:
   build:
@@ -169,17 +164,16 @@ jobs:
       - name: Generate documentations
         id: generate_documents
         run: |
-          if [ `find . -wholename ./docs/_sources/conf.py | wc -l` -eq 0 ]; then
+          if [ -f "./docs/_sources/conf.py" ]; then
             exit 0
           fi
           apt-get install -y python-pip
           pip2 install sphinx==1.8.6
-          pip2 install bs4
-          if [ `find . -wholename ./docs/_sources/requirements.txt | wc -l` -eq 1 ]; then
+          if [ -f "./docs/_sources/requirements.txt" ]; then
             pip2 install -r docs/_sources/requirements.txt
           fi
           source ../../devel/setup.bash
-          sphinx-apidoc -f -e -o docs/_sources ${{ inputs.doc_module_path }}
+          sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}
           sphinx-build docs/_sources docs/
           echo "::set-output name=file_exists::$(find . -wholename ./docs/py-modindex.html | wc -l)"
         shell: bash
@@ -191,4 +185,3 @@ jobs:
           publish_branch: gh-pages
           github_token: ${{ github.token }}
           publish_dir: ros/src/${{ github.event.repository.name }}/docs
-          force_orphan: true
