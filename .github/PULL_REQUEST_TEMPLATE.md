@@ -3,24 +3,32 @@
 <!-- 変更の目的 または 概要-->
 ## Summary
 
+<!-- このPull Requestで解決されるIssue
+fix #issue番号 の形式で記述
+fix以外のkeywordはこちら。(https://docs.github.com/ja/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) -->
+- fix #
+
 <!-- 変更の詳細 -->
 ## Detail
 
 <!-- この関数を変更したのでこの機能にも影響がある、など -->
 ## Impact
 
-<!-- 動作検証を行った項目 -->
+<!-- どのような動作検証を行ったか -->
 ## Test
-  * [ ] catkin buildを通った
-  * [ ] gazebo環境で起動した
+<!-- ROS package向け Template -->
+  <!-- * [ ] gazebo環境で起動した
     * [ ] cuboid
     * [ ] signage
   * [ ] 実機環境で起動した
     * [ ] cuboid
     * [ ] signage
-  * [ ] (アプリ名)で動作検証した
+  * [ ] (アプリ名)で動作検証した -->
 
-## refs
-<!-- 関連するIssue または pull request -->
-## 補足
-<!-- レビューをする際に見てほしい点、ローカル環境で試す際の注意点、など -->
+## Attention
+<!-- 上記項目以外の補足情報など
+例
+- レビューをする際に見てほしい点
+- ローカル環境で試す際の注意点
+- このPull Requestよりも先にマージしなければならないPull Request
+- 複数レビュワー指定している場合に、レビュー必須の人(いれば)の指定 -->
