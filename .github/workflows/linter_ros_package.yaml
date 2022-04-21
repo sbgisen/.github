@@ -172,7 +172,7 @@ jobs:
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint
       - name: yamllint
-        uses: reviewdog/action-yamllint@aabd7aef24430a8da23122ca6711faec445dfcf6 # v1.4.0
+        uses: reviewdog/action-yamllint@efeccedfc67c3b74c89e233cd61c8133784b82e0 # v1.5.1
         with:
           reporter: github-pr-review
           filter_mode: file
