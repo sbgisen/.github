@@ -20,14 +20,18 @@ on:
         type: string
         description: "Specify relative paths from /path/to/workspace/src as in
           ./ros-package/.rosinstall, separated by commas."
+      ros_distro:
+        default: melodic
+        required: false
+        type: string
 
 jobs:
   test:
     name: Run test
-    runs-on: [self-hosted, lab]
+    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
     timeout-minutes: 90
     env:
-      ROS_DISTRO: melodic
+      ROS_DISTRO: ${{ inputs.ros_distro }}
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -104,7 +108,11 @@ jobs:
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
             exit 0
           fi
-          sudo apt-get install -y python-catkin-tools
+          if [ ${ROS_DISTRO} == melodic ]; then
+            apt-get install -y python-catkin-tools
+          else
+            apt-get install -y python3-catkin-tools
+          fi
           source /opt/ros/${ROS_DISTRO}/setup.bash
           catkin init
           catkin config --extend /opt/ros/${ROS_DISTRO}
@@ -120,7 +128,7 @@ jobs:
             exit 0
           fi
           source devel/setup.bash
-          catkin run_tests -i --no-deps --no-status ${{ inputs.package_name }}
+          catkin build --verbose --catkin-make-args run_tests -- -i --no-deps --no-status ${{ inputs.package_name }}
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
         shell: bash -leo pipefail {0}
         working-directory: ${{ github.workspace }}/ros
