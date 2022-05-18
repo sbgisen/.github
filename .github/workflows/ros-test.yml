@@ -33,6 +33,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: ros/src/${{ github.event.repository.name }}
+          submodules: recursive
         timeout-minutes: 1
       - name: Upgrade apt packages
         run: |
