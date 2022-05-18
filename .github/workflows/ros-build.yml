@@ -59,7 +59,7 @@ jobs:
         timeout-minutes: 1
       - name: Update git version
         run: |
-          apt install -y software-properties-common
+          apt-get install -y software-properties-common
           add-apt-repository -y ppa:git-core/ppa
           apt-get update
           apt-get install git -y
