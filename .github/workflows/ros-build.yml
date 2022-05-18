@@ -57,10 +57,18 @@ jobs:
           key: ${{ secrets.ssh_key }}
           known_hosts: ${{ secrets.known_hosts }}
         timeout-minutes: 1
+      - name: Update git version
+        run: |
+          apt-get install -y software-properties-common
+          add-apt-repository -y ppa:git-core/ppa
+          apt-get update
+          apt-get install git -y
+        shell: bash
       - name: Check out source repository
         uses: actions/checkout@v2
         with:
           path: ros/src/${{ github.event.repository.name }}
+          submodules: recursive
         timeout-minutes: 1
       - name: Download repositories managed by vcstool
         run: |
