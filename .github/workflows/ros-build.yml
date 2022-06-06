@@ -43,6 +43,8 @@ jobs:
     name: Build
     runs-on: ${{ inputs.runs_on }}
     timeout-minutes: 60
+    env:
+      SPEAKER: true
     container:
       image: ros:${{ inputs.ros_distro }}
     steps:
