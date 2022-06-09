@@ -132,7 +132,10 @@ jobs:
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
             exit 0
           fi
+          apt-get install -y xvfb
           source devel/setup.bash
+          Xvfb :0 -screen 0 1366x768x24 -ac &
+          export DISPLAY=:0
           catkin build --verbose --catkin-make-args run_tests -- -i --no-deps --no-status ${{ inputs.package_name }}
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
         shell: bash -leo pipefail {0}
