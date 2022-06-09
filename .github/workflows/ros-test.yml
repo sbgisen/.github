@@ -24,11 +24,15 @@ on:
         default: melodic
         required: false
         type: string
+      machine:
+        default: docker
+        required: false
+        type: string
 
 jobs:
   test:
     name: Run test
-    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
+    runs-on: [self-hosted, "${{ inputs.machine }}", "${{ inputs.ros_distro }}"]
     timeout-minutes: 90
     env:
       ROS_DISTRO: ${{ inputs.ros_distro }}
