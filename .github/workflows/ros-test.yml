@@ -110,9 +110,9 @@ jobs:
             exit 0
           fi
           if [ ${ROS_DISTRO} == melodic ]; then
-            apt-get install -y python-catkin-tools
+            sudo apt-get install -y python-catkin-tools
           else
-            apt-get install -y python3-catkin-tools
+            sudo apt-get install -y python3-catkin-tools
           fi
           source /opt/ros/${ROS_DISTRO}/setup.bash
           catkin init
