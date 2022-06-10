@@ -100,7 +100,7 @@ jobs:
             mkdir build && cd build
             cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
             make
-            checkinstall -y --pkgname="libfreenect2"
+            sudo checkinstall -y --pkgname="libfreenect2"
           fi
         working-directory: ${{ github.workspace }}
         timeout-minutes: 1
