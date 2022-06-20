@@ -67,6 +67,16 @@ You can call workflow, with the following:
   Use to execute `wstool`.
   Set the result of `ssh-keyscan github.com` to secrets on the repository/organization.
 
+- secrets.cube_docs_aws_access_key_id (Optional)
+
+  Use to publish documentations.
+  Set AWS Access Key ID to secrets on the repository/organization.
+
+- secrets.cube_docs_aws_secret_access_key (Optional)
+
+  Use to publish documentations.
+  Set AWS Secret Access Key to secrets on the repository/organization.
+
 - inputs.package_name (Optional)
 
   ROS package name.
