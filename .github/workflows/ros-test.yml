@@ -129,7 +129,8 @@ jobs:
             exit 0
           fi
           source devel/setup.bash
-          catkin build --verbose --catkin-make-args run_tests -- -i --no-deps --no-status ${{ inputs.package_name }}
+          catkin build --verbose --make-args test -- --no-deps --no-status ${{ inputs.package_name }} \
+          --make-args ARGS=--verbose
           catkin_test_results --verbose --all build || (trap - ERR && exit 1)
         shell: bash -leo pipefail {0}
         working-directory: ${{ github.workspace }}/ros
