@@ -138,6 +138,7 @@ jobs:
             cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
             make
             checkinstall -y --pkgname="libfreenect2"
+            cd ../.. && rm -rf libfreenect2
           fi
         working-directory: ${{ github.workspace }}
         timeout-minutes: 3
