@@ -69,6 +69,7 @@ jobs:
               pre_n=${n}
               n=`echo ${files} | wc -w`
           done
+          vcs pull
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src
         timeout-minutes: 15
