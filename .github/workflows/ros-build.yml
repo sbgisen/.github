@@ -187,7 +187,11 @@ jobs:
               pip2 install -r docs/_sources/requirements.txt
             fi
           else
-            exit 0
+            apt-get install -y python3-pip
+            pip install sphinx
+            if [ -f "./docs/_sources/requirements.txt" ]; then
+              pip install -r docs/_sources/requirements.txt
+            fi
           fi
           source ../../devel/setup.bash
           sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}
