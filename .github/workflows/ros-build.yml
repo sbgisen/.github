@@ -7,10 +7,6 @@ on:
         required: true
       known_hosts:
         required: true
-      cube_docs_aws_access_key_id:
-        required: false
-      cube_docs_aws_secret_access_key:
-        required: false
     inputs:
       package_name:
         default: ${{ github.event.repository.name }}
