@@ -28,15 +28,11 @@ on:
         required: false
         type: string
       ignore_rosinstalls:
-        default: ""
+        default: ./eband_local_planner/.travis.rosinstall
         required: false
         type: string
         description: "Specify relative paths from /path/to/workspace/src as in
           ./ros-package/.rosinstall, separated by commas."
-      ros_distro:
-        default: melodic
-        required: false
-        type: string
 
 jobs:
   build:
@@ -44,7 +40,7 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     timeout-minutes: 60
     container:
-      image: ros:${{ inputs.ros_distro }}
+      image: ros:noetic
     outputs:
       upload_documents: ${{ steps.generate_documents.outputs.file_exists }}
     steps:
@@ -145,11 +141,7 @@ jobs:
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
             exit 0
           fi
-          if [ ${ROS_DISTRO} == melodic ]; then
-            apt-get install -y python-catkin-tools
-          else
-            apt-get install -y python3-catkin-tools
-          fi
+          apt-get install -y python3-catkin-tools
           source /opt/ros/${ROS_DISTRO}/setup.bash
           export PATH="/usr/lib/ccache:$PATH"
           catkin init
@@ -178,18 +170,10 @@ jobs:
           if [ ! -f "./docs/_sources/conf.py" ]; then
             exit 0
           fi
-          if [ ${ROS_DISTRO} == melodic ]; then
-            apt-get install -y python-pip
-            pip2 install sphinx==1.8.6
-            if [ -f "./docs/_sources/requirements.txt" ]; then
-              pip2 install -r docs/_sources/requirements.txt
-            fi
-          else
-            apt-get install -y python3-pip
-            pip install sphinx
-            if [ -f "./docs/_sources/requirements.txt" ]; then
-              pip install -r docs/_sources/requirements.txt
-            fi
+          apt-get install -y python3-pip
+          pip install sphinx
+          if [ -f "./docs/_sources/requirements.txt" ]; then
+            pip install -r docs/_sources/requirements.txt
           fi
           source ../../devel/setup.bash
           sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}

@@ -15,23 +15,19 @@ on:
         required: false
         type: string
       ignore_rosinstalls:
-        default: ""
+        default: ./eband_local_planner/.travis.rosinstall
         required: false
         type: string
         description: "Specify relative paths from /path/to/workspace/src as in
           ./ros-package/.rosinstall, separated by commas."
-      ros_distro:
-        default: melodic
-        required: false
-        type: string
 
 jobs:
   test:
     name: Run test
-    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
+    runs-on: [self-hosted, docker, noetic]
     timeout-minutes: 90
     env:
-      ROS_DISTRO: ${{ inputs.ros_distro }}
+      ROS_DISTRO: noetic
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
@@ -111,11 +107,7 @@ jobs:
           if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
             exit 0
           fi
-          if [ ${ROS_DISTRO} == melodic ]; then
-            sudo apt-get install -y python-catkin-tools
-          else
-            sudo apt-get install -y python3-catkin-tools
-          fi
+          sudo apt-get install -y python3-catkin-tools
           source /opt/ros/${ROS_DISTRO}/setup.bash
           catkin init
           catkin config --extend /opt/ros/${ROS_DISTRO}
@@ -140,7 +132,7 @@ jobs:
   lint_after_build:
     name: Lint after build
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
+    runs-on: [self-hosted, docker, noetic]
     timeout-minutes: 10
     needs: test
     env:
