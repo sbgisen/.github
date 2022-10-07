@@ -1,6 +1,6 @@
 # .github
-GitHub meta repository for sbgisen.
 
+GitHub meta repository for sbgisen.
 
 ## Reusable workflow
 
@@ -43,10 +43,11 @@ jobs:
 
 ### [Release Drafter](https://github.com/release-drafter/release-drafter)
 
-This repository contains Release Drafter config file. 
+This repository contains Release Drafter config file.
 `.github/release-drafter.yml`
 
 You can call workflow, with the following:
+
 ```
     uses: sbgisen/.github/.github/workflows/release-drafter.yml@main
 ```
@@ -66,16 +67,6 @@ You can call workflow, with the following:
 
   Use to execute `wstool`.
   Set the result of `ssh-keyscan github.com` to secrets on the repository/organization.
-
-- secrets.cube_docs_aws_access_key_id (Optional)
-
-  Use to publish documentations.
-  Set AWS Access Key ID to secrets on the repository/organization.
-
-- secrets.cube_docs_aws_secret_access_key (Optional)
-
-  Use to publish documentations.
-  Set AWS Secret Access Key to secrets on the repository/organization.
 
 - inputs.package_name (Optional)
 

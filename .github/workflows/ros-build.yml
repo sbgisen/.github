@@ -7,10 +7,6 @@ on:
         required: true
       known_hosts:
         required: true
-      cube_docs_aws_access_key_id:
-        required: false
-      cube_docs_aws_secret_access_key:
-        required: false
     inputs:
       package_name:
         default: ${{ github.event.repository.name }}
@@ -49,6 +45,8 @@ jobs:
     timeout-minutes: 60
     container:
       image: ros:${{ inputs.ros_distro }}
+    outputs:
+      upload_documents: ${{ steps.generate_documents.outputs.file_exists }}
     steps:
       - name: Install necessary apt packages
         run: |
@@ -196,21 +194,32 @@ jobs:
           source ../../devel/setup.bash
           sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}
           sphinx-build docs/_sources/ docs/_build/
-          echo "::set-output name=file_exists::$(find . -wholename ./docs/_build/py-modindex.html | wc -l)"
+          echo "::set-output name=file_exists::$(find . -wholename ./docs/_build/index.html | wc -l)"
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
-      - name: Publish documentations to AWS S3
+      - name: Upload documentations
         if: >-
           steps.generate_documents.outputs.file_exists == 1 &&
           github.event.repository.default_branch == github.ref_name &&
           github.event_name == 'push'
-        uses: jakejarvis/s3-sync-action@7ed8b112447abb09f1da74f3466e4194fc7a6311
+        uses: actions/upload-pages-artifact@v1
         with:
-          args: --delete
-        env:
-          AWS_S3_BUCKET: docs.cuboid.cloud
-          DEST_DIR: ${{ github.event.repository.name }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.cube_docs_aws_access_key_id }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.cube_docs_aws_secret_access_key }}
-          AWS_REGION: ap-northeast-1
-          SOURCE_DIR: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_build/
+          path: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_build/
+
+  deploy:
+    needs: build
+    if: >-
+      needs.build.outputs.upload_documents == 1 &&
+      github.event.repository.default_branch == github.ref_name &&
+      github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
