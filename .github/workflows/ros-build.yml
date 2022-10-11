@@ -99,9 +99,11 @@ jobs:
         working-directory: ${{ github.workspace }}/ros/src
         timeout-minutes: 5
       - name: Install rosdep packages
+        # explicitly install python-is-python3 https://github.com/sbgisen/.github/issues/126
         run: |
           rosdep update
           rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
+          apt-get install python-is-python3
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 15
