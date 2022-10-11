@@ -6,7 +6,7 @@ on:
 jobs:
   changes:
     name: changes
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 1
     outputs:
       cpp: ${{ steps.changes.outputs.cpp }}
@@ -54,7 +54,7 @@ jobs:
 
   clang:
     name: runner / c++
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.cpp == 'true'
@@ -79,17 +79,17 @@ jobs:
           fail_on_error: true
   python:
     name: runner / python
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.python == 'true'
     steps:
       - name: Check out source repository
         uses: actions/checkout@v2
-      - name: Set up Python2 environment
+      - name: Set up Python3 environment
         uses: actions/setup-python@v2
         with:
-          python-version: "2.7"
+          python-version: "3.8"
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
       - name: autopep8 format
@@ -108,15 +108,10 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          pip2 install pep8-naming==0.12.1 flake8-coding flake8-copyright
-          flake8 --version
+          pip3 install pep8-naming flake8-coding flake8-copyright flake8-docstrings
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --accept-encodings=utf-8 ${file_list} |\
           reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file -fail-on-error
-      - name: Set up Python3 environment
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.x"
       - name: isort # ref #53
         run: |
           pip3 install isort
@@ -132,8 +127,6 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          pip3 install flake8-docstrings
-          flake8 --version
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=D ${file_list} |\
           reviewdog -name="docstring" -level warning -reporter=github-pr-check \
@@ -141,7 +134,7 @@ jobs:
 
   cmake:
     name: runner / cmake-format
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.cmake == 'true'
@@ -162,7 +155,7 @@ jobs:
           fail_on_error: true
   yamllint:
     name: runner / yamllint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.yaml == 'true'
@@ -180,7 +173,7 @@ jobs:
           yamllint_flags: -s -c .yamllint ${{ needs.changes.outputs.yaml_files }}
   xml:
     name: runner / xml
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.xml == 'true'
