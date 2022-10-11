@@ -136,7 +136,7 @@ jobs:
     timeout-minutes: 10
     needs: test
     env:
-      ROS_DISTRO: melodic
+      ROS_DISTRO: noetic
     steps:
       - name: changed-file-filter
         id: changes
