@@ -108,7 +108,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          pip3 install pep8-naming flake8-coding flake8-copyright flake8-docstrings
+          pip3 install pep8-naming flake8-coding flake8-copyright
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --accept-encodings=utf-8 ${file_list} |\
           reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file -fail-on-error
@@ -127,6 +127,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
+          pip3 install flake8-docstrings
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=D ${file_list} |\
           reviewdog -name="docstring" -level warning -reporter=github-pr-check \
