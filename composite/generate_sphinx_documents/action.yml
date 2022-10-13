@@ -1,0 +1,71 @@
+name: "Generate sphinx documents"
+description: "Generate sphinx documents"
+
+outputs:
+  upload_documents:
+    description: "Whether the document exists or not"
+    value: ${{ steps.generate_documents.outputs.file_exists }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore inventory
+      id: restore-inventory
+      uses: actions/cache@v3
+      with:
+        path: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_sources/ros_msgs.inv
+        key: ros_msg_inv
+    - name: Install python dependencies
+      run: |
+        sudo apt-get install -y python3-pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+      shell: bash
+    - name: Generate ROS message inventory
+      if: steps.restore-inventory.outputs.cache-hit != 'true'
+      run: python3 ${{ github.action_path }}/generate_ros_msg_inv.py
+      shell: bash
+      working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_sources
+    - name: Generate documentations
+      id: generate_documents
+      run: |
+        if [ ! -f "./docs/_sources/index.rst" ]; then
+          exit 0
+        fi
+        inventories=`find /home/gisen/_work/inventories -name *.inv`
+        for file in ${inventories}
+        do
+          name=`basename ${file} .inv`
+          echo ${name}
+          if [ ${name} == ${{ github.event.repository.name }} ]; then
+            continue
+          fi
+          insert_block="    '${name}': ('https://sbgisen.github.io/${name}', '${name}.inv'),"
+          sed -i -e "/intersphinx_mapping = {/a ${insert_block}" ${{ github.action_path }}/conf.py
+          cp ${file} ./docs/_sources
+        done
+        latex_name=`echo ${{ github.event.repository.name }} | sed -e "s/_/\\\\\\\\_/g"`
+        sed -i s/LATEX_PACKAGE_NAME/${latex_name}/g ${{ github.action_path }}/conf.py
+        sed -i s/PACKAGE_NAME/${{ github.event.repository.name }}/g ${{ github.action_path }}/conf.py
+        cp ${{ github.action_path }}/conf.py ./docs/_sources
+        source ../../devel/setup.bash
+        sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}
+        sphinx-build docs/_sources/ docs/_build/
+        echo "::set-output name=file_exists::$(find . -wholename ./docs/_build/index.html | wc -l)"
+      shell: bash
+      working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+    - name: Store my inventory
+      run: cp ./docs/_build/objects.inv /home/gisen/_work/inventories/${{ github.event.repository.name }}.inv
+      shell: bash
+      working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+    - name: Upload documentations
+      if: >-
+        steps.generate_documents.outputs.file_exists == 1 &&
+        github.event.repository.default_branch == github.ref_name &&
+        github.event_name == 'push'
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_build/
+    - name: Clear local documents
+      run: rm -r ./docs/_build
+      shell: bash
+      working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
