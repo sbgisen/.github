@@ -41,8 +41,6 @@ jobs:
     timeout-minutes: 60
     container:
       image: ros:noetic
-    outputs:
-      upload_documents: ${{ steps.generate_documents.outputs.file_exists }}
     steps:
       - name: Install necessary apt packages
         run: |
@@ -166,46 +164,3 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
-      - name: Generate documentations
-        id: generate_documents
-        run: |
-          if [ ! -f "./docs/_sources/conf.py" ]; then
-            exit 0
-          fi
-          apt-get install -y python3-pip
-          pip install sphinx
-          if [ -f "./docs/_sources/requirements.txt" ]; then
-            pip install -r docs/_sources/requirements.txt
-          fi
-          source ../../devel/setup.bash
-          sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}
-          sphinx-build docs/_sources/ docs/_build/
-          echo "::set-output name=file_exists::$(find . -wholename ./docs/_build/index.html | wc -l)"
-        shell: bash
-        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
-      - name: Upload documentations
-        if: >-
-          steps.generate_documents.outputs.file_exists == 1 &&
-          github.event.repository.default_branch == github.ref_name &&
-          github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_build/
-
-  deploy:
-    needs: build
-    if: >-
-      needs.build.outputs.upload_documents == 1 &&
-      github.event.repository.default_branch == github.ref_name &&
-      github.event_name == 'push'
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
