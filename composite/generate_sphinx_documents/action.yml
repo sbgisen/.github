@@ -9,28 +9,38 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Check index.rst
+      id: check_index
+      run: |
+        if [ -f "./docs/_sources/index.rst" ]; then
+          echo "::set-output name=index_exists::1"
+        else
+          echo "::set-output name=index_exists::0"
+        fi
+      shell: bash
+      working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
     - name: Restore inventory
+      if: steps.check_index.outputs.index_exists == 1
       id: restore-inventory
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_sources/ros_msgs.inv
         key: ros_msg_inv
     - name: Install python dependencies
+      if: steps.check_index.outputs.index_exists == 1
       run: |
         sudo apt-get install -y python3-pip
         pip install -r ${{ github.action_path }}/requirements.txt
       shell: bash
     - name: Generate ROS message inventory
-      if: steps.restore-inventory.outputs.cache-hit != 'true'
+      if: steps.restore-inventory.outputs.cache-hit != 'true' && steps.check_index.outputs.index_exists == 1
       run: python3 ${{ github.action_path }}/generate_ros_msg_inv.py
       shell: bash
       working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_sources
     - name: Generate documentations
+      if: steps.check_index.outputs.index_exists == 1
       id: generate_documents
       run: |
-        if [ ! -f "./docs/_sources/index.rst" ]; then
-          exit 0
-        fi
         inventories=`find /home/gisen/_work/inventories -name *.inv`
         for file in ${inventories}
         do
@@ -54,11 +64,13 @@ runs:
       shell: bash
       working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
     - name: Store my inventory
+      if: steps.check_index.outputs.index_exists == 1
       run: cp ./docs/_build/objects.inv /home/gisen/_work/inventories/${{ github.event.repository.name }}.inv
       shell: bash
       working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
     - name: Upload documentations
       if: >-
+        steps.check_index.outputs.index_exists == 1 &&
         steps.generate_documents.outputs.file_exists == 1 &&
         github.event.repository.default_branch == github.ref_name &&
         github.event_name == 'push'
@@ -66,6 +78,7 @@ runs:
       with:
         path: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/docs/_build/
     - name: Clear local documents
+      if: steps.check_index.outputs.index_exists == 1
       run: rm -r ./docs/_build
       shell: bash
       working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
