@@ -101,7 +101,6 @@ jobs:
         run: |
           rosdep update
           rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
-          apt-get install python-is-python3
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 15
