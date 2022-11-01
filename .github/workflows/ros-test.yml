@@ -119,6 +119,17 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
+      - name: Run test
+        run: |
+          if [ `find src/${{ github.event.repository.name }} -name CMakeLists.txt | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          source devel/setup.bash
+          catkin build --verbose --make-args test -- --no-deps --no-status ${{ inputs.package_name }} \
+          --make-args ARGS=--verbose
+        shell: bash -leo pipefail {0}
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 60
       - name: Generate documents
         id: generate_documents
         uses: sbgisen/.github/composite/generate_sphinx_documents@main
