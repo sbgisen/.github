@@ -59,7 +59,7 @@ jobs:
               for f in ${files}
               do
                   if `not_contains ${f} ${ignore_files}`; then
-                      vcs import --recursive --debug < ${f}
+                      vcs import --recursive --debug --skip-existing < ${f}
                       ignore_files+=(${f})
                   fi
               done
