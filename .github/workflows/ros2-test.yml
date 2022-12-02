@@ -1,0 +1,181 @@
+name: ros-test
+
+on:
+  workflow_call:
+    inputs:
+      package_name:
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
+      setup_script:
+        required: false
+        type: string
+      ignore_rosinstalls:
+        default: ""
+        required: false
+        type: string
+        description: "Specify relative paths from /path/to/workspace/src as in
+          ./ros-package/.rosinstall, separated by commas."
+
+jobs:
+  test:
+    name: Run test
+    runs-on: [self-hosted, docker, humble]
+    timeout-minutes: 90
+    env:
+      ROS_DISTRO: humble
+    outputs:
+      upload_documents: ${{ steps.generate_documents.outputs.upload_documents }}
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+        with:
+          path: ros/src/${{ github.event.repository.name }}
+          submodules: recursive
+        timeout-minutes: 1
+      - name: Upgrade apt packages
+        run: |
+          sudo apt update && sudo apt upgrade -y
+      - name: Download repositories managed by vcstool
+        run: |
+          if !(type vcs > /dev/null 2>&1); then
+              sudo apt update && sudo apt install -y python3-vcstool
+          fi
+
+          not_contains() {
+              [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && exit 1 || exit 0
+          }
+
+          IFS=', ' read -ra ignore_files <<< "${{ inputs.ignore_rosinstalls }}"
+          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+          pre_n=0
+          n=`echo ${files} | wc -w`
+          while [ `comm -3 <(echo ${files}) <(echo ${ignore_files[@]} | sort) | wc -w` -ne 0 -a ${n} -ne ${pre_n} ]
+          do
+              for f in ${files}
+              do
+                  if `not_contains ${f} ${ignore_files}`; then
+                      vcs import --recursive --debug < ${f}
+                      ignore_files+=(${f})
+                  fi
+              done
+              files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+              pre_n=${n}
+              n=`echo ${files} | wc -w`
+          done
+          vcs pull
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src
+        timeout-minutes: 15
+      - name: Install rosdep packages
+        run: |
+          rosdep update
+          rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 15
+      - name: Run setup script
+        run: |
+          if [ "${{ inputs.setup_script }}" != "" ]; then
+            ./${{ inputs.setup_script }}
+          fi
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+        timeout-minutes: 30
+      - name: Build ros2 packages
+        run: |
+          if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          export PATH="/usr/lib/ccache:$PATH"
+          colcon build --packages-up-to ${{ inputs.package_name }} \
+          --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 30
+      - name: Run test
+        run: |
+          if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          source install/setup.bash
+          colcon test --packages-up-to ${{ inputs.package_name }}
+        shell: bash -leo pipefail {0}
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 60
+      - name: Generate documents
+        id: generate_documents
+        uses: sbgisen/.github/composite/generate_sphinx_documents@main
+
+  deploy:
+    needs: test
+    if: >-
+      needs.test.outputs.upload_documents == 1 &&
+      github.event.repository.default_branch == github.ref_name &&
+      github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+
+  lint_after_build:
+    name: Lint after build
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: [self-hosted, docker, noetic]
+    timeout-minutes: 10
+    needs: test
+    env:
+      ROS_DISTRO: noetic
+    steps:
+      - name: changed-file-filter
+        id: changes
+        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 # v2.10.2
+        with:
+          filters: |
+            cpp:
+              - added|modified: '**.h'
+              - added|modified: '**.hpp'
+              - added|modified: '**.hh'
+              - added|modified: '**.hxx'
+              - added|modified: '**.c'
+              - added|modified: '**.cpp'
+              - added|modified: '**.cc'
+              - added|modified: '**.cxx'
+          list-files: "shell"
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: Download clang tidy config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-tidy -O .clang-tidy
+        working-directory: ${{ github.workspace }}/ros
+      - name: clang-tidy
+        if: steps.changes.outputs.cpp == 'true'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+          sudo add-apt-repository -y \
+          "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-13 main"
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy-13
+          pip3 install compdb
+          cat ../../build/*/compile_commands.json > ../../build/compile_commands.json
+          sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/compile_commands.json
+          compdb -p ../../build list > ../../compile_commands.json
+          echo "------------------------ Run Clang-tidy ------------------------"
+          result=`clang-tidy-13 --quiet ${{ steps.changes.outputs.cpp_files }} \
+          --header-filter="${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/include/.*"`
+          if [[ -z ${result} ]]; then
+            exit 0
+          fi
+          echo ${result}
+          exit 1
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
