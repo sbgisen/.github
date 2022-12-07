@@ -1,0 +1,137 @@
+name: ros2-build-from-scratch
+
+on:
+  workflow_call:
+    secrets:
+      ssh_key:
+        required: true
+      known_hosts:
+        required: true
+    inputs:
+      package_name:
+        default: ${{ github.event.repository.name }}
+        required: false
+        type: string
+      run_test:
+        default: false
+        required: false
+        type: boolean
+      runs_on:
+        default: ubuntu-latest
+        required: false
+        type: string
+      setup_script:
+        required: false
+        type: string
+      ignore_rosinstalls:
+        default: ""
+        required: false
+        type: string
+        description: "Specify relative paths from /path/to/workspace/src as in
+          ./ros-package/.rosinstall, separated by commas."
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ inputs.runs_on }}
+    timeout-minutes: 60
+    container:
+      image: ros:humble
+    steps:
+      - name: Install necessary apt packages
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client keyboard-configuration python3-pip
+        timeout-minutes: 1
+      - name: setup ssh key
+        uses: shimataro/ssh-key-action@3c9b0fc6f2d223b8450b02a0445f526350fc73e0 # v2.3.1
+        with:
+          key: ${{ secrets.ssh_key }}
+          known_hosts: ${{ secrets.known_hosts }}
+        timeout-minutes: 1
+      - name: Update git version
+        run: |
+          apt-get install -y software-properties-common
+          add-apt-repository -y ppa:git-core/ppa
+          apt-get update
+          apt-get install git -y
+        shell: bash
+      - name: Check out source repository
+        uses: actions/checkout@v2
+        with:
+          path: ros/src/${{ github.event.repository.name }}
+          submodules: recursive
+        timeout-minutes: 1
+      - name: Download repositories managed by vcstool
+        run: |
+          if !(type vcs > /dev/null 2>&1); then
+              apt update && apt install -y python3-vcstool git
+          fi
+
+          not_contains() {
+              [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && exit 1 || exit 0
+          }
+
+          IFS=', ' read -ra ignore_files <<< "${{ inputs.ignore_rosinstalls }}"
+          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+          pre_n=0
+          n=`echo ${files} | wc -w`
+          while [ `comm -3 <(echo ${files}) <(echo ${ignore_files[@]} | sort) | wc -w` -ne 0 -a ${n} -ne ${pre_n} ]
+          do
+              for f in ${files}
+              do
+                  if `not_contains ${f} ${ignore_files}`; then
+                      vcs import --recursive --debug < ${f}
+                      ignore_files+=(${f})
+                  fi
+              done
+              files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+              pre_n=${n}
+              n=`echo ${files} | wc -w`
+          done
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src
+        timeout-minutes: 5
+      - name: Install rosdep packages
+        run: |
+          rosdep update
+          rosdep install -iry --from-paths . --rosdistro ${ROS_DISTRO}
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 15
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@1ed7eb5b4b2afeceab143d0caa0d7fa87c33047b # v1.0.5
+        with:
+          max-size: 100M
+        timeout-minutes: 1
+      - name: Run setup script
+        run: |
+          if [ "${{ inputs.setup_script }}" != "" ]; then
+            ./${{ inputs.setup_script }}
+          fi
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+        timeout-minutes: 30
+      - name: Build ros2 packages
+        run: |
+          if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          source /opt/ros/${ROS_DISTRO}/setup.bash
+          export PATH="/usr/lib/ccache:$PATH"
+          colcon build --packages-up-to ${{ inputs.package_name }} \
+          --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 30
+      - name: Run test
+        if: inputs.run_test
+        run: |
+          if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
+            exit 0
+          fi
+          source install/setup.bash
+          colcon test --packages-up-to ${{ inputs.package_name }}
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros
+        timeout-minutes: 30
