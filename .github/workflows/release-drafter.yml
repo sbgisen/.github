@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 1
     steps:
       # Drafts your next Release notes as Pull Requests are merged into "master"
-      - uses: release-drafter/release-drafter@fe52e97d262833ae07d05efaf1a239df3f1b5cd4 #v5.15.0
+      - uses: release-drafter/release-drafter@cfc5540ebc9d65a8731f02032e3d44db5e449fb6 # v5.22.0
         with:
           disable-releaser: ${{ github.ref_name != github.event.repository.default_branch }}
         env:
