@@ -48,7 +48,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client keyboard-configuration python3-pip
         timeout-minutes: 1
       - name: setup ssh key
-        uses: shimataro/ssh-key-action@3c9b0fc6f2d223b8450b02a0445f526350fc73e0 # v2.3.1
+        uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
         with:
           key: ${{ secrets.ssh_key }}
           known_hosts: ${{ secrets.known_hosts }}
@@ -61,7 +61,7 @@ jobs:
           apt-get install git -y
         shell: bash
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ros/src/${{ github.event.repository.name }}
           submodules: recursive
@@ -104,7 +104,7 @@ jobs:
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 15
       - name: ccache
-        uses: hendrikmuhs/ccache-action@1ed7eb5b4b2afeceab143d0caa0d7fa87c33047b # v1.0.5
+        uses: hendrikmuhs/ccache-action@150e52a55e33e5821ca49bb3fe24bb729634429a # v1.2.7
         with:
           max-size: 100M
         timeout-minutes: 1

@@ -21,10 +21,10 @@ jobs:
       xml_files: ${{ steps.changes.outputs.xml_files }}
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: changed-file-filter
         id: changes
-        uses: dorny/paths-filter@b2feaf19c27470162a626bd6fa8438ae5b263721 # v2.10.2
+        uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
         with:
           filters: |
             cpp:
@@ -60,19 +60,19 @@ jobs:
     if: needs.changes.outputs.cpp == 'true'
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format
-      - uses: DoozyX/clang-format-lint-action@2a28e3a8d9553f244243f7e1ff94f6685dff87be # v0.12
+      - uses: DoozyX/clang-format-lint-action@c3b2c943e924028b93a707a5b1b017976ab8d50c # v0.15
         with:
           source: ${{ needs.changes.outputs.cpp_files }}
           exclude: ""
           extensions: "h,hpp,hh,hxx,c,cpp,cc,cxx"
-          clangFormatVersion: 8
+          clangFormatVersion: 10
           style: file
           inplace: true
       - name: suggester / clang-format
-        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
           tool_name: clang-format
           filter_mode: file
@@ -85,19 +85,19 @@ jobs:
     if: needs.changes.outputs.python == 'true'
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python3 environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
       - name: autopep8 format
-        uses: peter-evans/autopep8@1ba8b3249d3cf04922eecd66fc6a024072f4a7b0 # v1.2.1
+        uses: peter-evans/autopep8@921e8f57f62a70ba5dd9fac0d1f4834e4d819c22 # v1.2.2
         with:
           args: -i ${{ needs.changes.outputs.python_files }}
       - name: suggester / autopep8
-        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
           tool_name: autopep8
           filter_mode: file
@@ -118,7 +118,7 @@ jobs:
           file_list="${{ needs.changes.outputs.python_files }}"
           isort ${file_list}
       - name: suggester / isort
-        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
           tool_name: isort
           filter_mode: file
@@ -141,7 +141,7 @@ jobs:
     if: needs.changes.outputs.cmake == 'true'
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format
       - name: cmake-format
@@ -149,7 +149,7 @@ jobs:
           pip3 install cmake-format
           cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
       - name: suggester / cmake-format
-        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
           tool_name: cmake-format
           filter_mode: file
@@ -162,11 +162,11 @@ jobs:
     if: needs.changes.outputs.yaml == 'true'
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint
       - name: yamllint
-        uses: reviewdog/action-yamllint@efeccedfc67c3b74c89e233cd61c8133784b82e0 # v1.5.1
+        uses: reviewdog/action-yamllint@8c429dfe4fc47b1ce1fa99a64e94693880d5dc30 # v1.6.1
         with:
           reporter: github-pr-review
           filter_mode: file
@@ -180,7 +180,7 @@ jobs:
     if: needs.changes.outputs.xml == 'true'
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
       - name: xmllint roslaunch
@@ -225,7 +225,7 @@ jobs:
           diff -B {} - |\
           patch {}"
       - name: suggester / xmllint
-        uses: reviewdog/action-suggester@1b18099af6c3c023256eb87a27aab5623e9b934d # v1.3.0
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
           tool_name: xmllint
           filter_mode: file
