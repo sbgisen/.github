@@ -110,6 +110,7 @@ jobs:
         # Fix flake8 version https://github.com/savoirfairelinux/flake8-copyright/issues/19
         run: |
           pip3 install pep8-naming flake8==5.0.4 flake8-coding flake8-copyright
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --accept-encodings=utf-8 ${file_list} |\
           reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file -fail-on-error
