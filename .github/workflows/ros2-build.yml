@@ -72,11 +72,12 @@ jobs:
               apt update && apt install -y python3-vcstool git
           fi
 
-          not_contains() {
-              [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && exit 1 || exit 0
+          contains() {
+              [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && true || false
           }
 
-          IFS=', ' read -ra ignore_files <<< "${{ inputs.ignore_rosinstalls }}"
+          ignores="${{ inputs.ignore_rosinstalls }}"
+          ignore_files=${ignores//,/ }
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
           pre_n=0
           n=`echo ${files} | wc -w`
@@ -84,7 +85,9 @@ jobs:
           do
               for f in ${files}
               do
-                  if `not_contains ${f} ${ignore_files}`; then
+                  if `contains "${ignore_files}" ${f}` || `contains ${f} ".github/"`; then
+                      echo ignore ${f}
+                  else
                       vcs import --recursive --debug < ${f}
                       ignore_files+=(${f})
                   fi
