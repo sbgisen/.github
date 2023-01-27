@@ -59,7 +59,7 @@ jobs:
           do
               for f in ${files}
               do
-                  if `contains "${ignore_files}" ${f}` || `contains ${f} ".github/"`; then
+                  if `contains "${ignore_files}" ${f}` || [[ ${f} =~ ".github/" ]]; then
                       echo ignore ${f}
                   else
                       vcs import --recursive --debug < ${f}
