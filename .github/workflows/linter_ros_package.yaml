@@ -113,7 +113,8 @@ jobs:
           wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --accept-encodings=utf-8 ${file_list} |\
-          reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %.%n %m' -filter-mode=file -fail-on-error
+          reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
+          -filter-mode=file -fail-on-error
       - name: isort # ref #53
         run: |
           pip3 install isort
