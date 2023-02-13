@@ -107,12 +107,12 @@ jobs:
       - name: flake8 lint
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
-        # Fix flake8 version https://github.com/savoirfairelinux/flake8-copyright/issues/19
         run: |
-          pip3 install pep8-naming flake8==5.0.4 flake8-coding flake8-copyright flake8-annotations
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/flake8_requirements.txt
+          pip3 install -r flake8_requirements.txt
           wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
-          flake8 --accept-encodings=utf-8 ${file_list} |\
+          flake8 --select=E,F,W,C,N,I,ANN --accept-encodings=utf-8 ${file_list} |\
           reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
           -filter-mode=file -fail-on-error
       - name: isort # ref #53
