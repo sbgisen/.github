@@ -29,7 +29,6 @@ jobs:
   test:
     name: Run test
     runs-on: [self-hosted, docker, noetic]
-    timeout-minutes: 90
     env:
       ROS_DISTRO: noetic
     outputs:
@@ -44,6 +43,7 @@ jobs:
       - name: Upgrade apt packages
         run: |
           sudo apt update && sudo apt upgrade -y
+        timeout-minutes: 10
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
@@ -140,9 +140,11 @@ jobs:
       - name: Generate documents
         id: generate_documents
         uses: sbgisen/.github/composite/generate_sphinx_documents@main
+        timeout-minutes: 10
 
   deploy:
     needs: test
+    timeout-minutes: 5
     if: >-
       needs.test.outputs.upload_documents == 1 &&
       github.event.repository.default_branch == github.ref_name &&

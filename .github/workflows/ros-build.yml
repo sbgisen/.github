@@ -42,7 +42,6 @@ jobs:
   build:
     name: Build
     runs-on: ${{ inputs.runs_on }}
-    timeout-minutes: 60
     container:
       image: ros:noetic
     steps:
@@ -64,6 +63,7 @@ jobs:
           apt-get update
           apt-get install git -y
         shell: bash
+        timeout-minutes: 3
       - name: Check out source repository
         uses: actions/checkout@v3
         with:
