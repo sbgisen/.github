@@ -111,7 +111,7 @@ jobs:
     uses: sbgisen/.github/.github/workflows/ros-build.yml@main
     secrets:
       ssh_key: ${{ secrets.SSH_KEY }}
-      known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      known_hosts: unnecessary
     with:
       install_libfreenect2: false
       run_test: false

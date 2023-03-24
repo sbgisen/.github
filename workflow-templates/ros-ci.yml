@@ -16,7 +16,7 @@ jobs:
     uses: sbgisen/.github/.github/workflows/ros-build.yml@main
     secrets:
       ssh_key: ${{ secrets.GISEN_ROBO_GIT }}
-      known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      known_hosts: unnecessary
   test:
     needs: linter
     if: ${{ !failure() }}

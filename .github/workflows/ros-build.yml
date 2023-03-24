@@ -5,8 +5,6 @@ on:
     secrets:
       ssh_key:
         required: true
-      known_hosts:
-        required: true
     inputs:
       package_name:
         default: ${{ github.event.repository.name }}
@@ -54,7 +52,7 @@ jobs:
         uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
         with:
           key: ${{ secrets.ssh_key }}
-          known_hosts: ${{ secrets.known_hosts }}
+          known_hosts: unnecessary
         timeout-minutes: 1
       - name: Update git version
         run: |
