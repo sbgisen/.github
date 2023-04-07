@@ -138,11 +138,11 @@ jobs:
   lint_after_build:
     name: Lint after build
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: [self-hosted, docker, noetic]
+    runs-on: [self-hosted, docker, humble]
     timeout-minutes: 10
     needs: test
     env:
-      ROS_DISTRO: noetic
+      ROS_DISTRO: humble
     steps:
       - name: changed-file-filter
         id: changes
