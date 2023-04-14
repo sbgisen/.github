@@ -51,6 +51,11 @@ extensions = [
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../_templates']
+smv_tag_whitelist = r'^v(?!1)\d+\.\d+\.\d+$'
+smv_branch_whitelist = r'^(?!melodic-devel)(?!\/)(.*-devel|develop|main|master)$'
+smv_latest_version = 'develop'
+smv_remote_whitelist = r'^(origin|upstream)$'
+smv_prefer_remote_refs = True
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
