@@ -7,6 +7,10 @@ on:
         default: ${{ github.event.repository.name }}
         required: false
         type: string
+      install_libfreenect2:
+        default: false
+        required: false
+        type: boolean
       setup_script:
         required: false
         type: string
@@ -89,6 +93,25 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
         timeout-minutes: 30
+      - name: Install libfreenect2
+        if: inputs.install_libfreenect2
+        run: |
+          sudo apt-get install -y build-essential cmake pkg-config libusb-1.0-0-dev \
+          libturbojpeg0-dev libglfw3-dev checkinstall
+          if dpkg -l libfreenect2; then
+            echo "Already installed"
+          else
+            git clone https://github.com/OpenKinect/libfreenect2.git
+            git clone https://github.com/NVIDIA/cuda-samples.git
+            cd libfreenect2
+            mkdir build && cd build
+            cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+            CPATH=$CPATH:${{ github.workspace }}/cuda-samples/Common/ make
+            sudo checkinstall -y --pkgname="libfreenect2"
+            cd ../.. && rm -rf libfreenect2
+          fi
+        working-directory: ${{ github.workspace }}
+        timeout-minutes: 3
       - name: Build ros2 packages
         run: |
           if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
