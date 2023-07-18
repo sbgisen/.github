@@ -108,8 +108,10 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
+          cd ${{ github.workspace }}/../
           wget https://raw.githubusercontent.com/sbgisen/.github/main/flake8_requirements.txt
           pip3 install -r flake8_requirements.txt
+          cd ${{ github.workspace }}
           wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=E,F,W,C,N,I,ANN --accept-encodings=utf-8 ${file_list} |\
@@ -117,7 +119,9 @@ jobs:
           -filter-mode=file -fail-on-error
       - name: isort # ref #53
         run: |
+          cd ${{ github.workspace }}/../
           pip3 install isort
+          cd ${{ github.workspace }}
           file_list="${{ needs.changes.outputs.python_files }}"
           isort ${file_list}
       - name: suggester / isort
@@ -130,7 +134,9 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
+          cd ${{ github.workspace }}/../
           pip3 install flake8-docstrings
+          cd ${{ github.workspace }}
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=D ${file_list} |\
           reviewdog -name="docstring" -level warning -reporter=github-pr-check \
