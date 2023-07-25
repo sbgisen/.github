@@ -96,6 +96,8 @@ jobs:
         uses: peter-evans/autopep8@921e8f57f62a70ba5dd9fac0d1f4834e4d819c22 # v1.2.2
         with:
           args: -i ${{ needs.changes.outputs.python_files }}
+      - name: Restore config
+        run: git diff --name-only | grep setup.cfg | xargs git checkout
       - name: suggester / autopep8
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
@@ -124,6 +126,7 @@ jobs:
           cd ${{ github.workspace }}
           file_list="${{ needs.changes.outputs.python_files }}"
           isort ${file_list}
+          git diff --name-only | grep setup.cfg | xargs git checkout
       - name: suggester / isort
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
@@ -137,6 +140,7 @@ jobs:
           cd ${{ github.workspace }}/../
           pip3 install flake8-docstrings
           cd ${{ github.workspace }}
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=D ${file_list} |\
           reviewdog -name="docstring" -level warning -reporter=github-pr-check \
@@ -157,6 +161,7 @@ jobs:
         run: |
           pip3 install cmake-format
           cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
+          git diff --name-only | grep .cmake-format | xargs git checkout
       - name: suggester / cmake-format
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
@@ -234,6 +239,7 @@ jobs:
           xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
           patch {}"
+          git diff --name-only | grep "^package_format.\.xsd" | xargs git checkout
       - name: suggester / xmllint
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
