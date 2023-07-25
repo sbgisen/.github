@@ -171,15 +171,12 @@ jobs:
         run: |
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
           sudo add-apt-repository -y \
-          "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-13 main"
+          "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-16 main"
           sudo apt-get update
-          sudo apt-get install -y clang-tidy-13
-          pip3 install compdb
-          cat ../../build/*/compile_commands.json > ../../build/compile_commands.json
-          sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/compile_commands.json
-          compdb -p ../../build list > ../../compile_commands.json
+          sudo apt-get install -y clang-tidy-16
+          cp ../../build/compile_commands.json ../../compile_commands.json
           echo "------------------------ Run Clang-tidy ------------------------"
-          result=`clang-tidy-13 --quiet ${{ steps.changes.outputs.cpp_files }} \
+          result=`clang-tidy-16 --quiet ${{ steps.changes.outputs.cpp_files }} \
           --header-filter="${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/include/.*"`
           if [[ -z ${result} ]]; then
             exit 0
