@@ -57,7 +57,11 @@ runs:
         sed -i s/LATEX_PACKAGE_NAME/${latex_name}/g ${{ github.action_path }}/conf.py
         sed -i s/PACKAGE_NAME/${{ github.event.repository.name }}/g ${{ github.action_path }}/conf.py
         cp ${{ github.action_path }}/conf.py ./docs/_sources
-        source ../../devel/setup.bash
+        if [ -f "../../devel" ]; then
+          source ../../devel/setup.bash
+        else
+          source ../../install/setup.bash
+        fi
         sphinx-apidoc -f -e -o docs/_sources src/${{ github.event.repository.name }}
         sphinx-build docs/_sources/ docs/_build/
         echo "file_exists=$(find . -wholename ./docs/_build/index.html | wc -l)" >> $GITHUB_OUTPUT
