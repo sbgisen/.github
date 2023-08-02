@@ -62,7 +62,7 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format -O .clang-format
       - uses: DoozyX/clang-format-lint-action@c3b2c943e924028b93a707a5b1b017976ab8d50c # v0.15
         with:
           source: ${{ needs.changes.outputs.cpp_files }}
@@ -91,11 +91,13 @@ jobs:
         with:
           python-version: "3.8"
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
       - name: autopep8 format
         uses: peter-evans/autopep8@921e8f57f62a70ba5dd9fac0d1f4834e4d819c22 # v1.2.2
         with:
           args: -i ${{ needs.changes.outputs.python_files }}
+      - name: Restore config
+        run: git diff --name-only | grep setup.cfg | xargs git checkout
       - name: suggester / autopep8
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
@@ -109,10 +111,10 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           cd ${{ github.workspace }}/../
-          wget https://raw.githubusercontent.com/sbgisen/.github/main/flake8_requirements.txt
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/flake8_requirements.txt -O flake8_requirements.txt
           pip3 install -r flake8_requirements.txt
           cd ${{ github.workspace }}
-          wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=E,F,W,C,N,I,ANN --accept-encodings=utf-8 ${file_list} |\
           reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
@@ -124,6 +126,7 @@ jobs:
           cd ${{ github.workspace }}
           file_list="${{ needs.changes.outputs.python_files }}"
           isort ${file_list}
+          git diff --name-only | grep setup.cfg | xargs git checkout
       - name: suggester / isort
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
@@ -137,6 +140,7 @@ jobs:
           cd ${{ github.workspace }}/../
           pip3 install flake8-docstrings
           cd ${{ github.workspace }}
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=D ${file_list} |\
           reviewdog -name="docstring" -level warning -reporter=github-pr-check \
@@ -152,11 +156,12 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
       - name: cmake-format
         run: |
           pip3 install cmake-format
           cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
+          git diff --name-only | grep .cmake-format | xargs git checkout
       - name: suggester / cmake-format
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
@@ -173,7 +178,7 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint -O .yamllint
       - name: yamllint
         uses: reviewdog/action-yamllint@8c429dfe4fc47b1ce1fa99a64e94693880d5dc30 # v1.6.1
         with:
@@ -198,7 +203,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install libxml2-utils
-          wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd
+          wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd \
+          -O roslaunch.xsd
           file_list="${{ needs.changes.outputs.xml_files }}"
           files=`echo ${file_list} | xargs -n 1 | grep -E ".*launch/.*\.(launch|xml)" || true`
           if [ -z ${files} ]; then
@@ -216,8 +222,8 @@ jobs:
           if [ -z ${files} ]; then
             echo "There are no package.xml files."
           else
-            wget http://download.ros.org/schema/package_format2.xsd
-            wget http://download.ros.org/schema/package_format3.xsd
+            wget http://download.ros.org/schema/package_format2.xsd -O package_format2.xsd
+            wget http://download.ros.org/schema/package_format3.xsd -O package_format3.xsd
             lint_result=/tmp/xmllint
             for file in ${files}
             do
@@ -233,6 +239,7 @@ jobs:
           xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
           patch {}"
+          git diff --name-only | grep "^package_format.\.xsd" | xargs git checkout
       - name: suggester / xmllint
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
