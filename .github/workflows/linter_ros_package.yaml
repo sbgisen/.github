@@ -2,6 +2,11 @@ name: lint-ros-package
 
 on:
   workflow_call:
+    inputs:
+      python_version:
+        default: "3.8"
+        required: false
+        type: string
 
 jobs:
   changes:
@@ -89,7 +94,7 @@ jobs:
       - name: Set up Python3 environment
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: ${{ inputs.python_version }}
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
       - name: autopep8 format

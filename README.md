@@ -22,6 +22,13 @@ The workflow can check the following items automatically.
   - Lint (xmllint)
     - Only launch files and package.xml
 
+#### Input parameters
+
+- inputs.python_version (Optional)
+
+  Use to lint python code.
+  Default is `3.8`.
+
 #### Usage
 
 1. Create a GitHub actions workflow file in your repository. e.g. `[repository_root]/.github/workflows/[your_workflow_name].yml`
