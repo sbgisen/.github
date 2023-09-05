@@ -57,7 +57,7 @@ runs:
         sed -i s/LATEX_PACKAGE_NAME/${latex_name}/g ${{ github.action_path }}/conf.py
         sed -i s/PACKAGE_NAME/${{ github.event.repository.name }}/g ${{ github.action_path }}/conf.py
         cp ${{ github.action_path }}/conf.py ./docs/_sources
-        if [ -f "../../devel" ]; then
+        if [ -d "../../devel" ]; then
           source ../../devel/setup.bash
         else
           source ../../install/setup.bash
