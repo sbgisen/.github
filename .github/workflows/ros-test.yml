@@ -66,7 +66,7 @@ jobs:
                   if `contains "${ignore_files}" ${f}` || [[ ${f} =~ ".github/" ]]; then
                       echo ignore ${f}
                   else
-                      vcs import --recursive --debug < ${f}
+                      vcs import --recursive --debug --force < ${f}
                       ignore_files+=(${f})
                   fi
               done
