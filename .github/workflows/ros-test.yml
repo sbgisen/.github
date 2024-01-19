@@ -118,6 +118,7 @@ jobs:
           fi
           sudo apt-get install -y python3-catkin-tools
           source /opt/ros/${ROS_DISTRO}/setup.bash
+          export PATH="$HOME/.local/bin:$PATH"
           catkin init
           catkin config --extend /opt/ros/${ROS_DISTRO}
           catkin config --no-blacklist
