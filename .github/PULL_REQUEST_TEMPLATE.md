@@ -16,14 +16,15 @@ fix以外のkeywordはこちら。(https://docs.github.com/ja/issues/tracking-yo
 
 <!-- どのような動作検証を行ったか -->
 ## Test
-<!-- ROS package向け Template -->
-  <!-- * [ ] gazebo環境で起動した
-    * [ ] cuboid
-    * [ ] signage
-  * [ ] 実機環境で起動した
-    * [ ] cuboid
-    * [ ] signage
-  * [ ] (アプリ名)で動作検証した -->
+
+<!-- ROS package向け Template
+
+* [ ] ビルドが通った
+* [ ] gazebo環境で動作した
+* [ ] 実機環境で動作した
+* [ ] (アプリ名)で動作検証した
+
+-->
 
 ## Attention
 <!-- 上記項目以外の補足情報など
