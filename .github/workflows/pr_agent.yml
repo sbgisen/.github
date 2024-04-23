@@ -5,6 +5,9 @@ name: PR-Agent
 
 on:
   workflow_call:
+    secrets:
+      openai_key:
+        required: true
 
 permissions:
   issues: write
@@ -19,7 +22,7 @@ jobs:
         id: pr_agent
         uses: Codium-ai/pr-agent@fae6cab2a7e0791df7e9f9c8e702f3a052e9d261 # v0.21 + gpt-4-turbo
         env:
-          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          OPENAI_KEY: ${{ secrets.openai_key }}
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: true
           GITHUB_ACTION_CONFIG.AUTO_REVIEW: true
