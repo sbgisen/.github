@@ -226,7 +226,7 @@ on:
 jobs:
   PR_agent:
     name: PR agent
-    uses: sbgisen/.github/.github/workflows/pr-agent.yml@main
+    uses: sbgisen/.github/.github/workflows/pr_agent.yml@main
     with:
       common_extra_instructions: "Please answer in Japanese." # Optional
     secrets:
