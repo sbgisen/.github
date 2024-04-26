@@ -166,3 +166,69 @@ jobs:
     with:
       install_libfreenect2: false
 ```
+
+### PR agent
+
+`pr-agent.yml` can be used to automatically write descriptions of PRs, review PRs, improve comments, and so on.
+
+#### Input parameters
+
+- inputs.common_extra_instructions
+
+  Common extra instructions for all commands.
+  It will be used if the specific instructions are not provided.
+  Default is empty.
+
+- inputs.description_extra_instructions
+
+  Description extra instructions.
+  Default is empty.
+
+- inputs.review_extra_instructions
+
+  Review extra instructions.
+  Default is empty.
+
+- inputs.improve_extra_instructions
+
+  Improve extra instructions.
+  Default is empty.
+
+- secrets.openai_key
+
+  Use to call OpenAI API.
+  Set OpenAI API key to secrets on the repository/organization.
+
+#### Usage
+
+1. Create a GitHub actions workflow file in your repository. e.g. `[repository_root]/.github/workflows/[your_workflow_name].yml`
+2. Just add `uses` as in the example file.
+
+  If you want to automatically comment on PRs created by PR agent when a PR is created, specify `opened` in `pull_request`.
+
+  :warning: Including triggers such as `synchronize` and `reopened` will cause PR agent to run when you add a commit to a PR, etc., consuming a large number of tokens.
+
+  If you don't need to run PR agent automatically on all PRs, but only when you post `/describe` (or `/review`, `/improve` ...) in a comment, specify `created` (or `edited`) in `issue_comment`.
+
+  If you want to generate content in Japanese, you can specify `Please answer in Japanese.` in `**_extra_instructions`.
+
+```yaml
+name: [your_workflow_name]
+
+on:
+  # For automatically comment on PRs created by PR agent when a PR is created
+  pull_request:
+    types: [opened]
+  # For run PR agent only when you post command in a comment
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  PR_agent:
+    name: PR agent
+    uses: sbgisen/.github/.github/workflows/pr-agent.yml@main
+    with:
+      common_extra_instructions: "Please answer in Japanese." # Optional
+    secrets:
+      openai_key: ${{ secrets.OPENAI_KEY }}
+```
