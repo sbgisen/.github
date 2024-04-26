@@ -48,6 +48,7 @@ jobs:
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: true
           GITHUB_ACTION_CONFIG.AUTO_REVIEW: true
           GITHUB_ACTION_CONFIG.AUTO_IMPROVE: true
+          PR_DESCRIPTION.USE_DESCRIPTION_MARKERS: true
           PR_REVIEWER.EXTRA_INSTRUCTIONS: |
             ${{ (inputs.review_extra_instructions != '' && inputs.review_extra_instructions) ||
             inputs.common_extra_instructions }}
