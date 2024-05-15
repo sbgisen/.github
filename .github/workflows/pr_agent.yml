@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: PR Agent action step
         id: pr_agent
-        uses: Codium-ai/pr-agent@fae6cab2a7e0791df7e9f9c8e702f3a052e9d261 # v0.21 + gpt-4-turbo
+        uses: Codium-ai/pr-agent@b4458ffedef0ba09a618742a21b95b4b492dc5c7 # v0.21 + gpt-4o
         env:
           OPENAI_KEY: ${{ secrets.openai_key }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -59,3 +59,5 @@ jobs:
           PR_DESCRIPTION.EXTRA_INSTRUCTIONS: |
             ${{ (inputs.description_extra_instructions != '' && inputs.description_extra_instructions) ||
             inputs.common_extra_instructions }}
+          CONFIG.MODEL: gpt-4o
+          CONFIG.MODEL_TURBO: gpt-4o
