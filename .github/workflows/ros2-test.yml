@@ -108,6 +108,7 @@ jobs:
           fi
           source install/setup.bash
           colcon test --packages-up-to ${{ inputs.package_name }}
+          colcon test-result --all --verbose
         shell: bash -leo pipefail {0}
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 60
