@@ -112,7 +112,7 @@ jobs:
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
       - name: ccache
-        uses: hendrikmuhs/ccache-action@150e52a55e33e5821ca49bb3fe24bb729634429a # v1.2.7
+        uses: hendrikmuhs/ccache-action@c92f40bee50034e84c763e33b317c77adaa81c92 # v1.2.13
         with:
           max-size: 100M
         timeout-minutes: 1
