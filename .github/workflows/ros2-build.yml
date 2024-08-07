@@ -29,6 +29,10 @@ on:
         type: string
         description: "Specify relative paths from /path/to/workspace/src as in
           ./ros-package/.rosinstall, separated by commas."
+      ros_distro:
+        default: humble
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-build
@@ -39,7 +43,7 @@ jobs:
     name: Build
     runs-on: ${{ inputs.runs_on }}
     container:
-      image: ros:humble
+      image: ros:${{ inputs.ros_distro }}
     steps:
       - name: Install necessary apt packages
         run: |

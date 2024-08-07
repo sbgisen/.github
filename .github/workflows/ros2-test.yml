@@ -16,6 +16,10 @@ on:
         type: string
         description: "Specify relative paths from /path/to/workspace/src as in
           ./ros-package/.rosinstall, separated by commas."
+      ros_distro:
+        default: humble
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-test
@@ -24,9 +28,9 @@ concurrency:
 jobs:
   test:
     name: Run test
-    runs-on: [self-hosted, docker, humble]
+    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
     env:
-      ROS_DISTRO: humble
+      ROS_DISTRO: "${{ inputs.ros_distro }}"
     outputs:
       upload_documents: ${{ steps.generate_documents.outputs.upload_documents }}
     steps:
@@ -138,11 +142,11 @@ jobs:
   lint_after_build:
     name: Lint after build
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: [self-hosted, docker, humble]
+    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
     timeout-minutes: 10
     needs: test
     env:
-      ROS_DISTRO: humble
+      ROS_DISTRO: "${{ inputs.ros_distro }}"
     steps:
       - name: changed-file-filter
         id: changes
