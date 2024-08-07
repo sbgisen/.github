@@ -111,7 +111,7 @@ jobs:
             exit 0
           fi
           source install/setup.bash
-          colcon test --packages-up-to ${{ inputs.package_name }}
+          colcon test --packages-up-to ${{ inputs.package_name }} --pytest-args --continue-on-collection-errors
         shell: bash -leo pipefail {0}
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 60
