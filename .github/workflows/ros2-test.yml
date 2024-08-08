@@ -80,6 +80,9 @@ jobs:
         timeout-minutes: 15
       - name: Install rosdep packages
         run: |
+          if [ ${{ inputs.ros_distro }} != "humble" ]; then
+            export PIP_BREAK_SYSTEM_PACKAGES=1
+          fi
           rosdep update
           rosdep install -iry --from-paths src --rosdistro ${ROS_DISTRO}
         shell: bash
