@@ -181,7 +181,11 @@ jobs:
           fi
           sudo apt-get update
           sudo apt-get install -y clang-tidy-16
-          cp ../../build/compile_commands.json ../../compile_commands.json
+          pip3 install compdb
+          find ../../build -name "compile_commands.json" -exec cat {} + > ../../build/merged_compile_commands.json
+          sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
+          mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
+          compdb -p ../../build list > ../../compile_commands.json
           echo "------------------------ Run Clang-tidy ------------------------"
           result=`clang-tidy-16 --quiet ${{ steps.changes.outputs.cpp_files }} \
           --header-filter="${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/include/.*"`
