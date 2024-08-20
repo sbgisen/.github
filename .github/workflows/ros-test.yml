@@ -20,6 +20,10 @@ on:
         type: string
         description: "Specify relative paths from /path/to/workspace/src as in
           ./ros-package/.rosinstall, separated by commas."
+      clean_before_build:
+        default: false
+        required: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-test
@@ -110,6 +114,12 @@ jobs:
             cd ../.. && sudo rm -rf libfreenect2
           fi
         working-directory: ${{ github.workspace }}
+        timeout-minutes: 1
+      - name: Clean before build
+        if: inputs.clean_before_build
+        run: |
+          catkin clean ${{ inputs.package_name }}
+        working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 1
       - name: Build ros packages
         run: |
