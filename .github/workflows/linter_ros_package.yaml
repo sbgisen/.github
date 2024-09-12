@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format -O .clang-format
-      - uses: DoozyX/clang-format-lint-action@c3b2c943e924028b93a707a5b1b017976ab8d50c # v0.15
+      - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
         with:
           source: ${{ needs.changes.outputs.cpp_files }}
           exclude: ""
