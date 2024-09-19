@@ -80,7 +80,7 @@ jobs:
         timeout-minutes: 15
       - name: Install rosdep packages
         run: |
-          echo -e "[global]\nbreak-system-packages = true" | sudo tee /etc/pip.conf > /dev/null
+          echo -e "[install]\nbreak-system-packages = true" | sudo tee /etc/pip.conf > /dev/null
           rosdep update
           rosdep install -iry --from-paths src --rosdistro ${ROS_DISTRO}
         shell: bash
