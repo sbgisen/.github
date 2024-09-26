@@ -102,7 +102,7 @@ jobs:
       - name: autopep8 format
         uses: peter-evans/autopep8@921e8f57f62a70ba5dd9fac0d1f4834e4d819c22 # v1.2.2
         with:
-          args: -i ${{ needs.changes.outputs.python_files }}
+          args: -i ${{ needs.changes.outputs.python_files }} --global-config setup.cfg
       - name: Restore config
         run: git diff --name-only | grep setup.cfg | xargs git checkout
       - name: suggester / autopep8
