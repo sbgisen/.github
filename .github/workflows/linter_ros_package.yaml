@@ -123,7 +123,7 @@ jobs:
           cd ${{ github.workspace }}
           wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
-          flake8 --select=E,F,W,C,N,I,ANN --accept-encodings=utf-8 ${file_list} |\
+          flake8 --select=E,F,W,C,N,I,ANN ${file_list} |\
           reviewdog -name="flake8" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
           -filter-mode=file -fail-on-error
       - name: isort # ref #53
