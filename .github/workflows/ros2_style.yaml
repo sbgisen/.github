@@ -66,7 +66,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Download config
         # yamllint disable-line rule:line-length
-        run: wget https://raw.githubusercontent.com/ament/ament_lint/refs/heads/master/ament_clang_format/ament_clang_format/configuration/.clang-format -O .clang-format
+        run: wget https://raw.githubusercontent.com/ament/ament_lint/refs/heads/rolling/ament_clang_format/ament_clang_format/configuration/.clang-format -O .clang-format
       - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
         with:
           source: ${{ needs.changes.outputs.cpp_files }}
