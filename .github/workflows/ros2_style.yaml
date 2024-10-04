@@ -151,7 +151,7 @@ jobs:
       - name: Download config
         run: |
           sudo apt update
-          sudo apt install -y wget
+          sudo apt install -y wget python3-pip
           wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
       - name: cmake-format
         run: |
