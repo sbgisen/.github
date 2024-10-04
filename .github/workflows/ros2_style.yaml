@@ -166,7 +166,7 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           pip3 install ament-lint-cmake-py
-          ament_cmake_lint ${{ needs.changes.outputs.cmake_files }} |\
+          ament_lint_cmake ${{ needs.changes.outputs.cmake_files }} |\
           reviewdog -name="cmake-lint" -reporter=github-pr-review -efm='%f:%l: %m' \
           -filter-mode=file -fail-level=any
 
