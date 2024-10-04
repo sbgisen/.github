@@ -98,16 +98,16 @@ jobs:
           python-version: ${{ inputs.python_version }}
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/pyproject.toml -O pyproject.toml
-      - name: autopep8 format
-        uses: peter-evans/autopep8@921e8f57f62a70ba5dd9fac0d1f4834e4d819c22 # v1.2.2
-        with:
-          args: -i --global-config pyproject.toml ${{ needs.changes.outputs.python_files }}
+      - name: yapf format
+        run: |
+          pip3 install yapf
+          yapf -ip --style pyproject.toml ${{ needs.changes.outputs.python_files }}
       - name: Restore config
         run: git diff --name-only | grep pyproject.toml | xargs git checkout
       - name: suggester / autopep8
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
-          tool_name: autopep8
+          tool_name: yapf
           filter_mode: file
           fail_on_error: true
       - name: Setup reviewdog
