@@ -120,7 +120,7 @@ jobs:
           cd ${{ github.workspace }}
           wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/pyproject.toml -O pyproject.toml
           file_list="${{ needs.changes.outputs.python_files }}"
-          ruff check --config /opt/work/.github/pyproject.toml |\
+          ruff check --config pyproject.toml |\
           reviewdog -name="ruff" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
           -filter-mode=file -fail-on-error
       - name: isort # ref #53
