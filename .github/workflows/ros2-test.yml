@@ -167,7 +167,7 @@ jobs:
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
       - name: Download clang tidy config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-tidy -O .clang-tidy
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2/ros2/.clang-tidy -O .clang-tidy
         working-directory: ${{ github.workspace }}/ros
       - name: clang-tidy
         if: steps.changes.outputs.cpp == 'true'
