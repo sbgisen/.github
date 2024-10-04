@@ -205,6 +205,8 @@ jobs:
         uses: actions/checkout@v3
       - name: xml format
         run: |
+          sudo apt update
+          sudo apt install -y wget
           echo ${{ needs.changes.outputs.xml_files }} |\
           xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
