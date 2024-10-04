@@ -147,7 +147,8 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
+        # yamllint disable-line rule:line-length
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/ros2/.cmake-format -O .cmake-format
       - name: cmake-format
         run: |
           pip3 install cmake-format
