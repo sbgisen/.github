@@ -218,6 +218,6 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           pip3 install ament-xmllint
-          ament_xmllint ${{ needs.changes.outputs.xml_files }} 1> /dev/null |\
+          ament_xmllint ${{ needs.changes.outputs.xml_files }} 2>&1 1>/dev/null |\
           reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l: %m' \
           -filter-mode=file -fail-level=any
