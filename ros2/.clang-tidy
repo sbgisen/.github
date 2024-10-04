@@ -6,7 +6,7 @@ Checks: "google-*,
   readability-*,
   llvm-namespace-comment,
   misc-unused-parameters,
-  misc-include-cleaner,
+  -readability-function-cognitive-complexity,
   "
 HeaderFilterRegex: ""
 CheckOptions:
