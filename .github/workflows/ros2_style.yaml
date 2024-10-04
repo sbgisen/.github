@@ -97,7 +97,7 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/pyproject.toml -O pyproject.toml
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/pyproject.toml -O pyproject.toml
       - name: autopep8 format
         uses: peter-evans/autopep8@921e8f57f62a70ba5dd9fac0d1f4834e4d819c22 # v1.2.2
         with:
@@ -118,7 +118,7 @@ jobs:
         run: |
           pip3 install ruff
           cd ${{ github.workspace }}
-          wget https://raw.githubusercontent.com/sbgisen/.github/main/pyproject.toml -O pyproject.toml
+          wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/pyproject.toml -O pyproject.toml
           file_list="${{ needs.changes.outputs.python_files }}"
           ruff check --config /opt/work/.github/pyproject.toml |\
           reviewdog -name="ruff" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
