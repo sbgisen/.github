@@ -155,8 +155,7 @@ jobs:
           wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
       - name: cmake-format
         run: |
-          pip3 install cmake-format
-          cd ${{ github.workspace }}
+          sudo pip3 install --break-system-packages cmake-format
           cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
           git diff --name-only | grep .cmake-format | xargs git checkout
       - name: suggester / cmake-format
@@ -208,7 +207,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y wget
-          cd ${{ github.workspace }}
+          ls -al
           echo ${{ needs.changes.outputs.xml_files }} |\
           xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
