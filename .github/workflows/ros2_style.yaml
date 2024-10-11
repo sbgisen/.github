@@ -66,7 +66,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Download config
         # yamllint disable-line rule:line-length
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/ros2/.clang-format -O .clang-format
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/ros2/.clang-format -O .clang-format
       - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
         with:
           source: ${{ needs.changes.outputs.cpp_files }}
@@ -97,7 +97,7 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
       - name: Download config
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/pyproject.toml -O pyproject.toml
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/pyproject.toml -O pyproject.toml
       - name: yapf format
         run: |
           pip3 install yapf
@@ -118,7 +118,7 @@ jobs:
         run: |
           pip3 install ruff
           cd ${{ github.workspace }}
-          wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/pyproject.toml -O pyproject.toml
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/pyproject.toml -O pyproject.toml
           file_list="${{ needs.changes.outputs.python_files }}"
           ruff check --config pyproject.toml |\
           reviewdog -name="ruff" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
@@ -148,7 +148,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Download config
         # yamllint disable-line rule:line-length
-        run: wget https://raw.githubusercontent.com/sbgisen/.github/feature/ros2-lint/ros2/.cmake-format -O .cmake-format
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/ros2/.cmake-format -O .cmake-format
       - name: cmake-format
         run: |
           pip3 install cmake-format
