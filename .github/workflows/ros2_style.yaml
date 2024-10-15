@@ -1,0 +1,224 @@
+name: ros2_style
+
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        default: "3.12"
+        required: false
+        type: string
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      cpp: ${{ steps.changes.outputs.cpp }}
+      cpp_files: ${{ steps.changes.outputs.cpp_files }}
+      python: ${{ steps.changes.outputs.python }}
+      python_files: ${{ steps.changes.outputs.python_files }}
+      cmake: ${{ steps.changes.outputs.cmake }}
+      cmake_files: ${{ steps.changes.outputs.cmake_files }}
+      yaml: ${{ steps.changes.outputs.yaml }}
+      yaml_files: ${{ steps.changes.outputs.yaml_files }}
+      xml: ${{ steps.changes.outputs.xml }}
+      xml_files: ${{ steps.changes.outputs.xml_files }}
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: changed-file-filter
+        id: changes
+        uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
+        with:
+          filters: |
+            cpp:
+              - added|modified: '**.h'
+              - added|modified: '**.hpp'
+              - added|modified: '**.hh'
+              - added|modified: '**.hxx'
+              - added|modified: '**.c'
+              - added|modified: '**.cpp'
+              - added|modified: '**.cc'
+              - added|modified: '**.cxx'
+            python:
+              - added|modified: '**.py'
+            cmake:
+              - added|modified: '**/CMakeLists.txt'
+              - added|modified: '**.cmake'
+            yaml:
+              - added|modified: '**.yaml'
+              - added|modified: '**.yml'
+            xml:
+              - added|modified: '**/package.xml'
+              - added|modified: '**.xacro'
+              - added|modified: '**.urdf'
+          list-files: "shell"
+
+  clang:
+    name: C++ style
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: changes
+    if: needs.changes.outputs.cpp == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Download config
+        # yamllint disable-line rule:line-length
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/ros2/.clang-format -O .clang-format
+      - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
+        with:
+          source: ${{ needs.changes.outputs.cpp_files }}
+          exclude: ""
+          extensions: "h,hpp,hh,hxx,c,cpp,cc,cxx"
+          clangFormatVersion: 10
+          style: file
+          inplace: true
+      - name: suggester / clang-format
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
+        with:
+          tool_name: clang-format
+          filter_mode: file
+          fail_on_error: true
+  python:
+    name: Python style
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Set up Python3 environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/pyproject.toml -O pyproject.toml
+      - name: yapf format
+        run: |
+          pip3 install yapf
+          yapf -ip --style pyproject.toml ${{ needs.changes.outputs.python_files }}
+      - name: Restore config
+        run: git diff --name-only | grep pyproject.toml | xargs git checkout
+      - name: suggester / autopep8
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
+        with:
+          tool_name: yapf
+          filter_mode: file
+          fail_on_error: true
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: ruff lint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          pip3 install ruff
+          cd ${{ github.workspace }}
+          wget https://raw.githubusercontent.com/sbgisen/.github/main/pyproject.toml -O pyproject.toml
+          file_list="${{ needs.changes.outputs.python_files }}"
+          ruff check --config pyproject.toml |\
+          reviewdog -name="ruff" -reporter=github-pr-review -efm='%f:%l:%c: %*[^0-9]%n %m' \
+          -filter-mode=file -fail-level=any
+      - name: isort # ref #53
+        run: |
+          pip3 install isort
+          cd ${{ github.workspace }}
+          file_list="${{ needs.changes.outputs.python_files }}"
+          isort --sp pyproject.toml ${file_list}
+          git diff --name-only | grep pyproject.toml | xargs git checkout
+      - name: suggester / isort
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
+        with:
+          tool_name: isort
+          filter_mode: file
+          fail_on_error: true
+
+  cmake:
+    name: CMake style
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: changes
+    if: needs.changes.outputs.cmake == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Download config
+        # yamllint disable-line rule:line-length
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/ros2/.cmake-format -O .cmake-format
+      - name: cmake-format
+        run: |
+          pip3 install cmake-format
+          cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
+          git diff --name-only | grep .cmake-format | xargs git checkout
+      - name: suggester / cmake-format
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
+        with:
+          tool_name: cmake-format
+          filter_mode: file
+          fail_on_error: true
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: cmake-lint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          pip3 install ament-lint-cmake-py
+          ament_lint_cmake ${{ needs.changes.outputs.cmake_files }} |\
+          reviewdog -name="cmake-lint" -reporter=github-pr-review -efm='%f:%l: %m' \
+          -filter-mode=file -fail-level=any
+
+  yamllint:
+    name: YAML style
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: changes
+    if: needs.changes.outputs.yaml == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Download config
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.yamllint -O .yamllint
+      - name: yamllint
+        uses: reviewdog/action-yamllint@8c429dfe4fc47b1ce1fa99a64e94693880d5dc30 # v1.6.1
+        with:
+          reporter: github-pr-review
+          filter_mode: file
+          fail_on_error: true
+          yamllint_flags: -s -c .yamllint ${{ needs.changes.outputs.yaml_files }}
+  xml:
+    name: XML style
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: changes
+    if: needs.changes.outputs.xml == 'true'
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: xml format
+        run: |
+          sudo apt update
+          sudo apt install libxml2-utils
+          echo ${{ needs.changes.outputs.xml_files }} |\
+          xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
+          diff -B {} - |\
+          patch {}"
+      - name: suggester / xmllint
+        uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
+        with:
+          tool_name: xmllint
+          filter_mode: file
+          fail_on_error: true
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: xmllint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          pip3 install ament-xmllint
+          ament_xmllint ${{ needs.changes.outputs.xml_files }} 2>&1 1>/dev/null |\
+          reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l: %m' \
+          -filter-mode=file -fail-level=any

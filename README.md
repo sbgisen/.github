@@ -48,6 +48,50 @@ jobs:
     uses: sbgisen/.github/.github/workflows/linter_ros_package.yaml@main
 ```
 
+### Linter for ROS2 packages
+
+The workflow can check the following items automatically.
+
+- C++
+  - Format (clang-format)
+- Python
+  - Format (yapf)
+  - Lint (ruff)
+- Cmake
+  - Format (cmake-format)
+- Yaml
+  - Lint (yamllint)
+- XML (package.xml, xacro files, urdf files)
+  - Format (xmllint)
+  - Lint (xmllint)
+    - Only launch files and package.xml
+
+#### Input parameters
+
+- inputs.python_version (Optional)
+
+  Use to lint python code.
+  Default is `3.12`.
+
+#### Usage
+
+1. Create a GitHub actions workflow file in your repository. e.g. `[repository_root]/.github/workflows/[your_workflow_name].yml`
+2. Just add `uses` as in the example file.
+
+    You should set trigger to `on: [pull_request]`.
+    Because the workflow suggest format and comment lint error with Pull Request review API.
+
+```yaml
+name: [your_workflow_name]
+
+on: [pull_request]
+
+jobs:
+  linter:
+    name: Linter
+    uses: sbgisen/.github/.github/workflows/ros2_style.yaml@main
+```
+
 ### [Release Drafter](https://github.com/release-drafter/release-drafter)
 
 This repository contains Release Drafter config file.
