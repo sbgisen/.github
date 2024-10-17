@@ -146,12 +146,16 @@ jobs:
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Set up Python3 environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
       - name: Download config
         # yamllint disable-line rule:line-length
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/ros2/.cmake-format -O .cmake-format
       - name: cmake-format
         run: |
-          pip3 install --break-system-packages cmake-format
+          pip3 install cmake-format
           cmake-format -c .cmake-format -i ${{ needs.changes.outputs.cmake_files }}
           git diff --name-only | grep .cmake-format | xargs git checkout
       - name: suggester / cmake-format
@@ -166,7 +170,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          pip3 install --break-system-packages ament-lint-cmake-py
+          pip3 install ament-lint-cmake-py
           ament_lint_cmake ${{ needs.changes.outputs.cmake_files }} |\
           reviewdog -name="cmake-lint" -reporter=github-pr-review -efm='%f:%l: %m' \
           -filter-mode=file -fail-level=any
@@ -198,6 +202,10 @@ jobs:
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Set up Python3 environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
       - name: xml format
         run: |
           sudo apt update
@@ -218,7 +226,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          pip3 install --break-system-packages ament-xmllint
+          pip3 install ament-xmllint
           ament_xmllint ${{ needs.changes.outputs.xml_files }} 2>&1 1>/dev/null |\
           reviewdog -name="xmllint" -reporter=github-pr-review -efm='%f:%l: %m' \
           -filter-mode=file -fail-level=any
