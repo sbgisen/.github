@@ -82,7 +82,7 @@ jobs:
 
           ignores="${{ inputs.ignore_rosinstalls }}"
           ignore_files=${ignores//,/ }
-          files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+          files=`find . -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" | sort`
           pre_n=0
           n=`echo ${files} | wc -w`
           while [ `comm -3 <(echo ${files}) <(echo ${ignore_files[@]} | sort) | wc -w` -ne 0 -a ${n} -ne ${pre_n} ]
@@ -96,7 +96,7 @@ jobs:
                       ignore_files+=(${f})
                   fi
               done
-              files=`find . -type f -regextype posix-egrep -regex "\./.+\.rosinstall" | sort`
+              files=`find . -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" | sort`
               pre_n=${n}
               n=`echo ${files} | wc -w`
           done
