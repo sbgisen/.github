@@ -72,7 +72,7 @@ jobs:
           source: ${{ needs.changes.outputs.cpp_files }}
           exclude: ""
           extensions: "h,hpp,hh,hxx,c,cpp,cc,cxx"
-          clangFormatVersion: 10
+          clangFormatVersion: 16
           style: file
           inplace: true
       - name: suggester / clang-format
