@@ -170,21 +170,24 @@ jobs:
         # yamllint disable-line rule:line-length
         run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/ros2/.clang-tidy -O .clang-tidy
         working-directory: ${{ github.workspace }}/ros
+      - name: Download clangd config
+        # yamllint disable-line rule:line-length
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/.clangd -O .clangd
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
       - name: clang-tidy
         if: steps.changes.outputs.cpp == 'true'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy
-          pip3 install compdb
+          sudo apt-get install -y clangd
+          pip3 install compdb clangd-tidy
           find ../../build -name "compile_commands.json" -exec cat {} + > ../../build/merged_compile_commands.json
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
           echo "------------------------ Run Clang-tidy ------------------------"
-          result=`echo ${{ steps.changes.outputs.cpp_files }} | xargs -P 10 -n 1 | xargs -I {} clang-tidy --quiet {} \
-          --header-filter="${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/include/.*"`
+          result=`clangd-tidy -p ../../ -j 10 ${{ steps.changes.outputs.cpp_files }}`
           if [[ -z ${result} ]]; then
             exit 0
           fi
