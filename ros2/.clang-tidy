@@ -2,7 +2,7 @@
 Checks: "google-*,
   -google-explicit-constructor,
   performance-*,
-  modernize-*
+  modernize-*,
   readability-*,
   llvm-namespace-comment,
   misc-unused-parameters,
