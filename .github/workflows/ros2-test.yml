@@ -144,7 +144,7 @@ jobs:
     name: Lint after build
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
-    timeout-minutes: 10
+    timeout-minutes: 30
     needs: test
     env:
       ROS_DISTRO: "${{ inputs.ros_distro }}"
@@ -183,7 +183,7 @@ jobs:
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
           echo "------------------------ Run Clang-tidy ------------------------"
-          result=`echo ${{ steps.changes.outputs.cpp_files }} | xargs -n 1 | xargs -I {} clang-tidy --quiet {} \
+          result=`echo ${{ steps.changes.outputs.cpp_files }} | xargs -P 10 -n 1 | xargs -I {} clang-tidy --quiet {} \
           --header-filter="${{ github.workspace }}/ros/src/${{ github.event.repository.name }}/include/.*"`
           if [[ -z ${result} ]]; then
             exit 0
