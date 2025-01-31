@@ -1,4 +1,4 @@
-name: ros2-build-from-scratch
+name: ros2-build
 
 on:
   workflow_call:
@@ -12,10 +12,6 @@ on:
         default: ${{ github.event.repository.name }}
         required: false
         type: string
-      run_test:
-        default: false
-        required: false
-        type: boolean
       runs_on:
         default: ubuntu-latest
         required: false
@@ -44,6 +40,8 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     container:
       image: ros:${{ inputs.ros_distro }}
+    outputs:
+      upload_documents: ${{ steps.generate_documents.outputs.upload_documents }}
     steps:
       - name: Install necessary apt packages
         run: |
@@ -137,7 +135,6 @@ jobs:
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 120
       - name: Run test
-        if: inputs.run_test
         run: |
           if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
             exit 0
@@ -147,3 +144,73 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
+      - name: Generate documents
+        id: generate_documents
+        uses: sbgisen/.github/composite/generate_sphinx_documents@main
+        timeout-minutes: 10
+
+      - name: changed-file-filter
+        id: changes
+        uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
+        with:
+          filters: |
+            cpp:
+              - added|modified: '**.h'
+              - added|modified: '**.hpp'
+              - added|modified: '**.hh'
+              - added|modified: '**.hxx'
+              - added|modified: '**.c'
+              - added|modified: '**.cpp'
+              - added|modified: '**.cc'
+              - added|modified: '**.cxx'
+          list-files: "shell"
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: Download clang tidy config
+        # yamllint disable-line rule:line-length
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/ros2/.clang-tidy -O .clang-tidy
+        working-directory: ${{ github.workspace }}/ros
+      - name: Download clangd config
+        # yamllint disable-line rule:line-length
+        run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/.clangd -O .clangd
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+      - name: clang-tidy
+        if: steps.changes.outputs.cpp == 'true'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clangd
+          pip3 install compdb clangd-tidy
+          find ../../build -name "compile_commands.json" -exec cat {} + > ../../build/merged_compile_commands.json
+          sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
+          mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
+          compdb -p ../../build list > ../../compile_commands.json
+          echo "------------------------ Run Clang-tidy ------------------------"
+          result=`clangd-tidy -p ../../ -j 10 ${{ steps.changes.outputs.cpp_files }}`
+          if [[ -z ${result} ]]; then
+            exit 0
+          fi
+          echo ${result}
+          exit 1
+        shell: bash
+        working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+
+  deploy:
+    needs: build
+    timeout-minutes: 5
+    if: >-
+      needs.build.outputs.upload_documents == 1 &&
+      github.event.repository.default_branch == github.ref_name &&
+      github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

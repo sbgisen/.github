@@ -1,7 +1,12 @@
-name: ros-test
+name: ros2-build-gpu
 
 on:
   workflow_call:
+    secrets:
+      ssh_key:
+        required: true
+      known_hosts:
+        required: true
     inputs:
       package_name:
         default: ${{ github.event.repository.name }}
@@ -22,32 +27,48 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-test
+  group: ${{ github.workflow }}-${{ github.ref }}-build
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Run test
-    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
-    env:
-      ROS_DISTRO: "${{ inputs.ros_distro }}"
+  build:
+    name: Build
+    runs-on:
+      group: gpu-large
+    container:
+      image: ros:${{ inputs.ros_distro }}
     outputs:
       upload_documents: ${{ steps.generate_documents.outputs.upload_documents }}
     steps:
+      - name: Install necessary apt packages
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client keyboard-configuration python3-pip
+        timeout-minutes: 1
+      - name: setup ssh key
+        uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
+        with:
+          key: ${{ secrets.ssh_key }}
+          known_hosts: ${{ secrets.known_hosts }}
+        timeout-minutes: 1
+      - name: Update git version
+        run: |
+          apt-get install -y software-properties-common
+          add-apt-repository -y ppa:git-core/ppa
+          apt-get update
+          apt-get install git -y
+        shell: bash
+        timeout-minutes: 3
       - name: Check out source repository
         uses: actions/checkout@v3
         with:
           path: ros/src/${{ github.event.repository.name }}
           submodules: recursive
         timeout-minutes: 1
-      - name: Upgrade apt packages
-        run: |
-          sudo apt update && sudo apt upgrade -y
-        timeout-minutes: 10
       - name: Download repositories managed by vcstool
         run: |
           if !(type vcs > /dev/null 2>&1); then
-              sudo apt update && sudo apt install -y python3-vcstool
+              apt update && apt install -y python3-vcstool git
           fi
 
           contains() {
@@ -66,7 +87,7 @@ jobs:
                   if `contains "${ignore_files}" ${f}` || [[ ${f} =~ ".github/" ]]; then
                       echo ignore ${f}
                   else
-                      vcs import --recursive --debug --force < ${f}
+                      vcs import --recursive --debug < ${f}
                       ignore_files+=(${f})
                   fi
               done
@@ -74,18 +95,22 @@ jobs:
               pre_n=${n}
               n=`echo ${files} | wc -w`
           done
-          vcs pull
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src
-        timeout-minutes: 15
+        timeout-minutes: 5
       - name: Install rosdep packages
         run: |
-          echo -e "[install]\nbreak-system-packages = true" | sudo tee /etc/pip.conf > /dev/null
+          echo -e "[install]\nbreak-system-packages = true" | tee /etc/pip.conf > /dev/null
           rosdep update
           rosdep install -iry --from-paths src --rosdistro ${ROS_DISTRO}
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 15
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@c92f40bee50034e84c763e33b317c77adaa81c92 # v1.2.13
+        with:
+          max-size: 100M
+        timeout-minutes: 1
       - name: Run setup script
         run: |
           if [ "${{ inputs.setup_script }}" != "" ]; then
@@ -105,50 +130,22 @@ jobs:
           --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         shell: bash
         working-directory: ${{ github.workspace }}/ros
-        timeout-minutes: 30
+        timeout-minutes: 120
       - name: Run test
         run: |
           if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
             exit 0
           fi
           source install/setup.bash
-          colcon test --packages-up-to ${{ inputs.package_name }} --pytest-args --continue-on-collection-errors
-        shell: bash -leo pipefail {0}
+          colcon test --packages-up-to ${{ inputs.package_name }}
+        shell: bash
         working-directory: ${{ github.workspace }}/ros
-        timeout-minutes: 60
+        timeout-minutes: 30
       - name: Generate documents
         id: generate_documents
         uses: sbgisen/.github/composite/generate_sphinx_documents@main
         timeout-minutes: 10
 
-  deploy:
-    needs: test
-    timeout-minutes: 5
-    if: >-
-      needs.test.outputs.upload_documents == 1 &&
-      github.event.repository.default_branch == github.ref_name &&
-      github.event_name == 'push'
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
-
-  lint_after_build:
-    name: Lint after build
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: [self-hosted, docker, "${{ inputs.ros_distro }}"]
-    timeout-minutes: 30
-    needs: test
-    env:
-      ROS_DISTRO: "${{ inputs.ros_distro }}"
-    steps:
       - name: changed-file-filter
         id: changes
         uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
@@ -195,3 +192,22 @@ jobs:
           exit 1
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
+
+  deploy:
+    needs: build
+    timeout-minutes: 5
+    if: >-
+      needs.build.outputs.upload_documents == 1 &&
+      github.event.repository.default_branch == github.ref_name &&
+      github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
