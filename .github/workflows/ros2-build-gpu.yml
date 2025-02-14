@@ -70,7 +70,7 @@ jobs:
       - name: Install necessary apt packages
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client keyboard-configuration python3-pip
+          DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client keyboard-configuration python3-pip wget
         timeout-minutes: 1
       - name: setup ssh key
         uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
