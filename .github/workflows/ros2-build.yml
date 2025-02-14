@@ -35,8 +35,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      cpp: ${{ steps.changes.outputs.cpp }}
+      cpp_files: ${{ steps.changes.outputs.cpp_files }}
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: changed-file-filter
+        id: changes
+        uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
+        with:
+          filters: |
+            cpp:
+              - added|modified: '**.h'
+              - added|modified: '**.hpp'
+              - added|modified: '**.hh'
+              - added|modified: '**.hxx'
+              - added|modified: '**.c'
+              - added|modified: '**.cpp'
+              - added|modified: '**.cc'
+              - added|modified: '**.cxx'
+          list-files: "shell"
+
   build:
     name: Build
+    needs: changes
     runs-on: ${{ inputs.runs_on }}
     container:
       image: ros:${{ inputs.ros_distro }}
@@ -148,22 +175,6 @@ jobs:
         id: generate_documents
         uses: sbgisen/.github/composite/generate_sphinx_documents@main
         timeout-minutes: 10
-
-      - name: changed-file-filter
-        id: changes
-        uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
-        with:
-          filters: |
-            cpp:
-              - added|modified: '**.h'
-              - added|modified: '**.hpp'
-              - added|modified: '**.hh'
-              - added|modified: '**.hxx'
-              - added|modified: '**.c'
-              - added|modified: '**.cpp'
-              - added|modified: '**.cc'
-              - added|modified: '**.cxx'
-          list-files: "shell"
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
       - name: Download clang tidy config
@@ -175,7 +186,7 @@ jobs:
         run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/.clangd -O .clangd
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
       - name: clang-tidy
-        if: steps.changes.outputs.cpp == 'true'
+        if: needs.changes.outputs.cpp == 'true'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
@@ -187,7 +198,7 @@ jobs:
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
           echo "------------------------ Run Clang-tidy ------------------------"
-          result=`clangd-tidy -p ../../ -j 10 ${{ steps.changes.outputs.cpp_files }}`
+          result=`clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }}`
           if [[ -z ${result} ]]; then
             exit 0
           fi
