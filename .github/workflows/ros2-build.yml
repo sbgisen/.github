@@ -197,7 +197,7 @@ jobs:
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
-          result=`clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }}`
+          clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} |\
           reviewdog -name="clang-tidy" -reporter=github-pr-review -efm='%f:%l:%c: %m' \
           -filter-mode=file -fail-level=any
         shell: bash
