@@ -186,7 +186,7 @@ jobs:
         run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/.clangd -O .clangd
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
       - name: clang-tidy
-        if: needs.changes.outputs.cpp == 'true' && github.event_name == 'pull_request'
+        if: needs.changes.outputs.cpp == 'true'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
@@ -197,10 +197,10 @@ jobs:
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
-          clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} |\
-          reviewdog -name="clang-tidy" -reporter=github-pr-review -efm='%f:%l:%c: %m' \
-          -filter-mode=file -fail-level=any
-        shell: bash
+          output=$(clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }})
+          echo "$output"
+          echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
+          -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
 
   deploy:
