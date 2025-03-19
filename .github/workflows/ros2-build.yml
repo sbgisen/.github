@@ -201,6 +201,7 @@ jobs:
           echo "$output"
           echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
           -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
+        shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
 
   deploy:
