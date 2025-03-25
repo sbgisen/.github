@@ -197,9 +197,9 @@ jobs:
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
           compdb -p ../../build list > ../../compile_commands.json
-          clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} |\
-          reviewdog -name="clang-tidy" -reporter=github-pr-review -efm='%f:%l:%c: %m' \
-          -filter-mode=file -fail-level=any
+          output=$(clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
+          echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
+          -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src/${{ github.event.repository.name }}
 
