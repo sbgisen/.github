@@ -94,7 +94,8 @@ jobs:
         timeout-minutes: 1
       - name: Download repositories managed by ripvcs
         run: |
-          wget https://github.com/ErickKramer/ripvcs/releases/download/v1.0.0/rv -O /usr/local/bin/rv
+          wget https://github.com/ErickKramer/ripvcs/releases/download/v1.0.0/ripvcs_1.0.0_linux_amd64 \
+          -O /usr/local/bin/rv
           chmod +x /usr/local/bin/rv
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" | sort`
           ignores=$(echo "${{ inputs.ignore_rosinstalls }}" | tr ',' '\n' | awk '{printf "-x %s ", $0}')
