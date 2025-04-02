@@ -92,36 +92,19 @@ jobs:
           path: ros/src/${{ github.event.repository.name }}
           submodules: recursive
         timeout-minutes: 1
-      - name: Download repositories managed by vcstool
+      - name: Download repositories managed by ripvcs
         run: |
-          if !(type vcs > /dev/null 2>&1); then
-              apt update && apt install -y python3-vcstool git
-          fi
-
-          contains() {
-              [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && true || false
-          }
-
-          ignores="${{ inputs.ignore_rosinstalls }}"
-          ignore_files=${ignores//,/ }
+          wget https://github.com/ErickKramer/ripvcs/releases/download/v1.0.1/ripvcs_1.0.1_linux_amd64 \
+          -O /usr/local/bin/rv
+          chmod +x /usr/local/bin/rv
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" | sort`
-          pre_n=0
-          n=`echo ${files} | wc -w`
-          while [ `comm -3 <(echo ${files}) <(echo ${ignore_files[@]} | sort) | wc -w` -ne 0 -a ${n} -ne ${pre_n} ]
-          do
-              for f in ${files}
-              do
-                  if `contains "${ignore_files}" ${f}` || [[ ${f} =~ ".github/" ]]; then
-                      echo ignore ${f}
-                  else
-                      vcs import --recursive --debug < ${f}
-                      ignore_files+=(${f})
-                  fi
-              done
-              files=`find . -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" | sort`
-              pre_n=${n}
-              n=`echo ${files} | wc -w`
-          done
+          ignores=$(echo "${{ inputs.ignore_rosinstalls }}" | tr ',' '\n' | awk '{printf "-x %s ", $0}')
+          if [ `echo ${files} | wc -w` -ne 0 ]; then
+            for f in ${files}
+            do
+              rv import -r -s -i ${f} ${ignores}
+            done
+          fi
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src
         timeout-minutes: 5
