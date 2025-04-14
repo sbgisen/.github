@@ -101,7 +101,11 @@ jobs:
           -O /usr/local/bin/rv
           chmod +x /usr/local/bin/rv
           files=`find . -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" | sort`
-          ignores=$(echo "${{ inputs.ignore_rosinstalls }}" | tr ',' '\n' | awk '{printf "-x %s ", $0}')
+          if [ "${{ inputs.ignore_rosinstalls }}" != "" ]; then
+            ignores=$(echo "${{ inputs.ignore_rosinstalls }}" | tr ',' '\n' | awk '{printf "-x %s ", $0}')
+          else
+            ignores=""
+          fi
           if [ `echo ${files} | wc -w` -ne 0 ]; then
             for f in ${files}
             do
