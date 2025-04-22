@@ -17,7 +17,7 @@ line-length = 119
 
 [tool.ruff.lint]
 preview = true
-select = ["A", "ANN", "C4", "CPY", "D", "D401", "E", "F", "N", "Q", "W"]
+select = ["A", "ANN", "C4", "CPY", "D", "D401", "E", "F", "N", "Q", "W", "SLF"]
 ignore = [
     "ANN002",
     "ANN003",
