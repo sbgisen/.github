@@ -124,7 +124,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 # v1.2.18
         with:
           max-size: 100M
-        timeout-minutes: 5
+        timeout-minutes: 1
       - name: Run setup script
         run: |
           if [ "${{ inputs.setup_script }}" != "" ]; then
