@@ -81,14 +81,6 @@ jobs:
           key: ${{ secrets.ssh_key }}
           known_hosts: ${{ secrets.known_hosts }}
         timeout-minutes: 1
-      - name: Update git version
-        run: |
-          apt-get install -y software-properties-common
-          add-apt-repository -y ppa:git-core/ppa
-          apt-get update
-          apt-get install git -y
-        shell: bash
-        timeout-minutes: 3
       - name: Check out source repository
         uses: actions/checkout@v3
         with:
@@ -164,6 +156,8 @@ jobs:
         timeout-minutes: 10
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
+      - name: Install uv
+        uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v6.1.0
       - name: Download clang tidy config
         # yamllint disable-line rule:line-length
         run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/ros2/.clang-tidy -O .clang-tidy
@@ -179,12 +173,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clangd
-          pip3 install compdb clangd-tidy
           find ../../build -name "compile_commands.json" -exec cat {} + > ../../build/merged_compile_commands.json
           sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
           mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
-          compdb -p ../../build list > ../../compile_commands.json
-          output=$(clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
+          uvx compdb -p ../../build list > ../../compile_commands.json
+          output=$(uvx clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
           echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
           -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
         shell: bash
