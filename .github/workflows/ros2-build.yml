@@ -81,14 +81,6 @@ jobs:
           key: ${{ secrets.ssh_key }}
           known_hosts: ${{ secrets.known_hosts }}
         timeout-minutes: 1
-      - name: Update git version
-        run: |
-          apt-get install -y software-properties-common
-          add-apt-repository -y ppa:git-core/ppa
-          apt-get update
-          apt-get install git -y
-        shell: bash
-        timeout-minutes: 3
       - name: Check out source repository
         uses: actions/checkout@v3
         with:
