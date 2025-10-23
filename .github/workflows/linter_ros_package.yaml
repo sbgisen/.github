@@ -70,8 +70,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.cpp == 'true'
     steps:
+      - name: Install necessary apt packages
+        run: |
+          apt update
+          DEBIAN_FRONTEND=noninteractive apt install -y wget git
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format -O .clang-format
       - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
@@ -98,10 +104,16 @@ jobs:
     needs: changes
     if: needs.changes.outputs.python == 'true'
     steps:
+      - name: Install necessary apt packages
+        run: |
+          apt update
+          DEBIAN_FRONTEND=noninteractive apt install -y wget git
       - name: Check out source repository
         uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Set up Python3 environment
         uses: actions/setup-python@v4
         with:
@@ -126,10 +138,8 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          cd ${{ github.workspace }}/../
           wget https://raw.githubusercontent.com/sbgisen/.github/main/flake8_requirements.txt -O flake8_requirements.txt
           pip3 install -r flake8_requirements.txt
-          cd ${{ github.workspace }}
           wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=E,F,W,C,N,I,ANN ${file_list} |\
@@ -137,9 +147,7 @@ jobs:
           -filter-mode=file -fail-on-error
       - name: isort # ref #53
         run: |
-          cd ${{ github.workspace }}/../
           pip3 install isort
-          cd ${{ github.workspace }}
           file_list="${{ needs.changes.outputs.python_files }}"
           isort ${file_list}
           git diff --name-only | grep setup.cfg | xargs git checkout
@@ -153,9 +161,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          cd ${{ github.workspace }}/../
           pip3 install flake8-docstrings
-          cd ${{ github.workspace }}
           wget https://raw.githubusercontent.com/sbgisen/.github/main/setup.cfg -O setup.cfg
           file_list="${{ needs.changes.outputs.python_files }}"
           flake8 --select=D ${file_list} |\
@@ -172,8 +178,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.cmake == 'true'
     steps:
+      - name: Install necessary apt packages
+        run: |
+          apt update
+          apt install -y wget git python3-pip
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
       - name: cmake-format
@@ -197,6 +209,10 @@ jobs:
     needs: changes
     if: needs.changes.outputs.yaml == 'true'
     steps:
+      - name: Install necessary apt packages
+        run: |
+          apt update
+          apt install -y wget git python3-pip
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Download config
@@ -218,6 +234,10 @@ jobs:
     needs: changes
     if: needs.changes.outputs.xml == 'true'
     steps:
+      - name: Install necessary apt packages
+        run: |
+          apt update
+          apt install -y wget git
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Setup reviewdog
@@ -226,8 +246,8 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
-          sudo apt update
-          sudo apt install libxml2-utils
+          apt update
+          apt install -y libxml2-utils
           wget https://gist.githubusercontent.com/nalt/dfa2abc9d2e3ae4feb82ca5608090387/raw/roslaunch.xsd \
           -O roslaunch.xsd
           file_list="${{ needs.changes.outputs.xml_files }}"
