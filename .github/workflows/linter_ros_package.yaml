@@ -76,6 +76,8 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt install -y wget git
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format -O .clang-format
       - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
@@ -110,6 +112,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Set up Python3 environment
         uses: actions/setup-python@v4
         with:
@@ -186,6 +190,8 @@ jobs:
           apt install -y wget git python3-pip
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
       - name: cmake-format
