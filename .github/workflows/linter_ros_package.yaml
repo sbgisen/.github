@@ -242,6 +242,8 @@ jobs:
           apt install -y wget git curl
       - name: Check out source repository
         uses: actions/checkout@v3
+      - name: Fix Git safe directory
+        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
       - name: Setup reviewdog
         run: |
           wget -O - -q https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh |\
@@ -290,7 +292,7 @@ jobs:
           xargs -n 1 | xargs -I {} bash -c "xmllint --format {} |\
           diff -B {} - |\
           patch {}"
-          git diff --name-only | grep "^package_format.\.xsd" | xargs git checkout
+          git diff --name-only | grep -E "^package_format[0-9]+\.xsd" | xargs git checkout || true
       - name: suggester / xmllint
         uses: reviewdog/action-suggester@8f83d27e749053b2029600995c115026a010408e # v1.6.0
         with:
