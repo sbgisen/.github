@@ -77,7 +77,7 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Fix Git safe directory
-        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.clang-format -O .clang-format
       - uses: DoozyX/clang-format-lint-action@c71d0bf4e21876ebec3e5647491186f8797fde31 # v0.18.2
@@ -113,7 +113,7 @@ jobs:
         with:
           submodules: recursive
       - name: Fix Git safe directory
-        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - name: Set up Python3 environment
         uses: actions/setup-python@v4
         with:
@@ -187,7 +187,7 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Fix Git safe directory
-        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - name: Download config
         run: wget https://raw.githubusercontent.com/sbgisen/.github/main/.cmake-format -O .cmake-format
       - name: cmake-format
@@ -243,7 +243,7 @@ jobs:
       - name: Check out source repository
         uses: actions/checkout@v3
       - name: Fix Git safe directory
-        run: git config --global --add safe.directory /__w/fuyu_fbl_ros/fuyu_fbl_ros
+        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
       - name: Setup reviewdog
         run: |
           wget -O - -q https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh |\
