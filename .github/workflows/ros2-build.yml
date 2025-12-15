@@ -173,18 +173,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clangd
-          find ../../build -name "compile_commands.json"
-          find ../../build -name "compile_commands.json" -exec cat {} + > ../../build/merged_compile_commands.json
-          echo "Merged compile_commands.json:"
-          cat ../../build/merged_compile_commands.json
-          sed -i -e ':a;N;$!ba;s/\]\n*\[/,/g' ../../build/merged_compile_commands.json
-          echo "Fixed compile_commands.json:"
-          cat ../../build/merged_compile_commands.json
-          mv ../../build/merged_compile_commands.json ../../build/compile_commands.json
-          echo "Final compile_commands.json:"
-          cat ../../build/compile_commands.json
-          uvx compdb -p ../../build list > ../../compile_commands.json
-          output=$(uvx clangd-tidy -p ../../ -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
+          output=$(uvx clangd-tidy -p ../../build -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
           echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
           -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
         shell: bash
