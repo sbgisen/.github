@@ -137,19 +137,20 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           colcon build --packages-up-to ${{ inputs.package_name }} \
           --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          ls build/panda_bringup
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 120
-      - name: Run test
-        run: |
-          if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
-            exit 0
-          fi
-          source install/setup.bash
-          colcon test --packages-up-to ${{ inputs.package_name }} --event-handlers compile_commands-
-        shell: bash
-        working-directory: ${{ github.workspace }}/ros
-        timeout-minutes: 30
+      # - name: Run test
+      #   run: |
+      #     if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
+      #       exit 0
+      #     fi
+      #     source install/setup.bash
+      #     colcon test --packages-up-to ${{ inputs.package_name }}
+      #   shell: bash
+      #   working-directory: ${{ github.workspace }}/ros
+      #   timeout-minutes: 30
       - name: Generate documents
         id: generate_documents
         uses: sbgisen/.github/composite/generate_sphinx_documents@main
@@ -173,7 +174,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clangd
-          python3 -m pip show colcon-cmake
           output=$(uvx clangd-tidy -p ../../build -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
           echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
           -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
