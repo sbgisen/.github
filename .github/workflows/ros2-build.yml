@@ -146,7 +146,7 @@ jobs:
             exit 0
           fi
           source install/setup.bash
-          colcon test --packages-up-to ${{ inputs.package_name }}
+          colcon test --packages-up-to ${{ inputs.package_name }} --event-handlers compile_commands-
         shell: bash
         working-directory: ${{ github.workspace }}/ros
         timeout-minutes: 30
@@ -173,6 +173,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clangd
+          python3 -m pip show colcon-cmake
           output=$(uvx clangd-tidy -p ../../build -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
           echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
           -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
