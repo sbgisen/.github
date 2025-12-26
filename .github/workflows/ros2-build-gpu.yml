@@ -185,7 +185,7 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y clangd
+          sudo apt-get install -y clangd libomp-dev
           output=$(uvx clangd-tidy -p ../../build -j 10 ${{ needs.changes.outputs.cpp_files }} || true)
           echo "$output" | reviewdog -name="clang-tidy" -reporter=github-pr-review \
           -efm='%f:%l:%c: %m' -filter-mode=file -fail-level=any
