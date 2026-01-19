@@ -136,7 +136,7 @@ jobs:
           --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         shell: bash
         working-directory: ${{ github.workspace }}/ros
-        timeout-minutes: 120
+        timeout-minutes: 150
       - name: Run test
         run: |
           if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
