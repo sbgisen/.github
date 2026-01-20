@@ -29,6 +29,11 @@ on:
         default: humble
         required: false
         type: string
+      build_timeout:
+        default: 120
+        required: false
+        type: number
+        description: "Build timeout."
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-build
@@ -139,7 +144,7 @@ jobs:
           --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         shell: bash
         working-directory: ${{ github.workspace }}/ros
-        timeout-minutes: 120
+        timeout-minutes: ${{ inputs.build_timeout }}
       - name: Run test
         run: |
           if [ `find src/${{ github.event.repository.name }} -name package.xml | wc -l` -eq 0 ]; then
