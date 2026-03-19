@@ -1,0 +1,17 @@
+name: Auto assign team to new repos
+
+on:
+  repository:
+    types: [created]
+
+jobs:
+  add-team:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add internal-employees team to new repository
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+        run: |
+          gh api -X PUT \
+            "orgs/sbgisen/teams/internal-employees/repos/sbgisen/${{ github.event.repository.name }}" \
+            -f permission="push"
