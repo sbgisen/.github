@@ -109,6 +109,8 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}/ros/src
         timeout-minutes: 5
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       - name: Install rosdep packages
         run: |
           echo -e "[install]\nbreak-system-packages = true" | tee /etc/pip.conf > /dev/null
@@ -174,8 +176,6 @@ jobs:
           list-files: "shell"
       - name: Setup reviewdog
         uses: reviewdog/action-setup@8f2ec89e6b467ca9175527d2a1641bbd0c05783b # v1.0.3
-      - name: Install uv
-        uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v6.1.0
       - name: Download clang tidy config
         # yamllint disable-line rule:line-length
         run: wget https://raw.githubusercontent.com/sbgisen/.github/refs/heads/main/ros2/.clang-tidy -O .clang-tidy
