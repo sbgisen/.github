@@ -115,7 +115,14 @@ newer feature (C++20 ranges/`std::format`, 3.12-only syntax, a newer ROS API), r
 Keep approvals terse. Do **not** manufacture findings to look thorough, and do **not**
 approve merely to be agreeable.
 
-## 8. Anti-patterns (do not do these)
+## 8. Suggestion block code must obey coding format
+
+Every ```suggestion block must obey the coding format for that specific code.
+Refer to `.github/instructions/**.instruction.md` files for specific format rule.
+- Python: `.github/instructions/python-format-instructions.md`
+- C/C++: `.github/instructions/cpp-format-instructions.md`
+
+## 9. Anti-patterns (do not do these)
 
 - Don't rewrite the whole file or impose personal style preferences.
 - Don't pad with generic advice ("consider adding tests") untied to a specific line.
