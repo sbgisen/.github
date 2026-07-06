@@ -308,7 +308,9 @@ Claude reviews the diff following the same org-wide review instructions as GitHu
 
   Repository-specific context for the review (design policies, constraints, focus areas) should be written in the repository's `CLAUDE.md`, which Claude reads automatically.
 
-  :warning: Including `synchronize` in `pull_request` triggers a review on every push to the PR, consuming a large number of tokens. Use `types: [opened]` if you only want a review when the PR is created.
+  The example below triggers a review when the `sbgisen/claude` team is requested as a reviewer on the PR (the team needs read access to the repository to appear in the Reviewers list). To also review every new PR automatically, add `opened` to `types` and extend the `if` condition with `github.event.action == 'opened'`.
+
+  :warning: Triggering on `synchronize` runs a review on every push to the PR, consuming a large number of tokens.
 
   :warning: Secrets are not passed to workflows triggered by pull requests from forks, so this workflow does not run for external contributors' PRs.
 
@@ -317,7 +319,7 @@ name: Claude PR Review
 
 on:
   pull_request:
-    types: [opened]
+    types: [review_requested]
 
 permissions:
   contents: read
@@ -326,6 +328,7 @@ permissions:
 
 jobs:
   claude_pr_review:
+    if: github.event.requested_team.slug == 'claude'
     name: Claude PR review
     uses: sbgisen/.github/.github/workflows/claude_pr_review.yml@main
     secrets:

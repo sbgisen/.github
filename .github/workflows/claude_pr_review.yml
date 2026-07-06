@@ -63,6 +63,10 @@ jobs:
               the review body. Fall back to `gh pr review` if inline anchoring fails.
             - The `.sbgisen-github/` directory is a checkout of the instructions repository,
               not part of this pull request. Never review or mention its contents as findings.
+            - If this run was triggered by a review request to a team (check the event payload
+              at $GITHUB_EVENT_PATH for `requested_team`), remove that team's review request
+              after submitting your review:
+              `gh api --method DELETE repos/{owner}/{repo}/pulls/{number}/requested_reviewers -f "team_reviewers[]=<team-slug>"`
 
             Now review this pull request.
           claude_args: |
