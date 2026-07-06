@@ -119,8 +119,8 @@ approve merely to be agreeable.
 
 Every ```suggestion block must obey the coding format for that specific code.
 Refer to `.github/instructions/**.instruction.md` files for specific format rule.
-- Python: `.github/instructions/python-format-instructions.md`
-- C/C++: `.github/instructions/cpp-format-instructions.md`
+- Python: `.github/instructions/python-format.instructions.md`
+- C/C++: `.github/instructions/cpp-format.instructions.md`
 
 ## 9. Anti-patterns (do not do these)
 
