@@ -35,21 +35,37 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Fetch the org-wide review instructions shared with GitHub Copilot code review
+      - name: Checkout review instructions
+        uses: actions/checkout@v4
+        with:
+          repository: sbgisen/.github
+          path: .sbgisen-github
+          # TODO: Remove this ref once feature/claude-pr-review is merged into main.
+          ref: feature/claude-pr-review
+
       - name: Claude review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.anthropic_api_key }}
           prompt: |
-            Review this pull request and post your feedback as a PR comment.
+            Your review instructions are in `.sbgisen-github/.github/copilot-instructions.md`.
+            Read that file first and follow it strictly, with these adjustments:
 
-            Focus on:
-            - Correctness bugs and edge cases
-            - Security issues
-            - Performance concerns
-            - Readability and maintainability
+            - Marker sentence: write "SBGISEN CLAUDE REVIEW 2026" instead of the one in the file.
+            - The coding format files referenced as `.github/instructions/` in the instructions
+              are located under `.sbgisen-github/.github/instructions/`.
+            - Submit your review as a formal GitHub pull request review, not a plain comment.
+              Map your verdict to the review event: APPROVE -> approve,
+              COMMENT -> comment, REQUEST_CHANGES -> request changes.
+              Use the pull request reviews API via `gh api` so that each finding is posted
+              as an inline comment anchored to the file and line, with the PR Overview as
+              the review body. Fall back to `gh pr review` if inline anchoring fails.
+            - The `.sbgisen-github/` directory is a checkout of the instructions repository,
+              not part of this pull request. Never review or mention its contents as findings.
 
-            Be concise. Only report issues that matter; do not praise or restate the diff.
-            Write the review comment in Japanese.
+            Now review this pull request.
           claude_args: |
             --model ${{ inputs.model }}
             --max-turns ${{ inputs.max_turns }}
+            --allowedTools "Bash(gh pr review:*),Bash(gh api:*)"
