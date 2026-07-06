@@ -24,6 +24,8 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  # Required to exchange an OIDC token for the Claude GitHub App token.
+  id-token: write
 
 jobs:
   claude_review:

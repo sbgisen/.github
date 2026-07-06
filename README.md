@@ -282,7 +282,7 @@ jobs:
 `claude_pr_review.yml` runs [Claude Code](https://github.com/anthropics/claude-code-action) as an automated PR reviewer.
 Claude reviews the diff following the same org-wide review instructions as GitHub Copilot code review (`.github/copilot-instructions.md` in this repository) and submits its feedback as a formal PR review (approve / comment / request changes) with inline comments.
 
-:warning: To let Claude approve PRs, enable "Allow GitHub Actions to create and approve pull requests" in the repository (or organization) settings under Actions > General > Workflow permissions. Without it, `REQUEST_CHANGES` and `COMMENT` reviews still work, but `APPROVE` fails.
+:warning: The [Claude GitHub App](https://github.com/apps/claude) must be installed on the organization (or the repository). Reviews are posted as `claude[bot]` via the app token, which the workflow obtains through OIDC (`id-token: write`).
 
 #### Input parameters
 
@@ -325,6 +325,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
   claude_pr_review:
