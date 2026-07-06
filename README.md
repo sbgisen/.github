@@ -276,3 +276,56 @@ jobs:
     secrets:
       openai_key: ${{ secrets.OPENAI_KEY }}
 ```
+
+### Claude PR Review
+
+`claude_pr_review.yml` runs [Claude Code](https://github.com/anthropics/claude-code-action) as an automated PR reviewer.
+Claude reviews the diff and posts its feedback as a PR comment (in Japanese by default).
+
+#### Input parameters
+
+- inputs.model (Optional)
+
+  Model used for the review.
+  Default is `claude-sonnet-5`.
+
+- inputs.max_turns (Optional)
+
+  Maximum number of agent turns to avoid runaway costs.
+  Default is `10`.
+
+- secrets.anthropic_api_key
+
+  Use to call the Anthropic API.
+  Set the Anthropic API key to secrets on the repository/organization.
+
+#### Usage
+
+1. Create a GitHub actions workflow file in your repository. e.g. `[repository_root]/.github/workflows/claude_pr_review.yml`
+2. Just add `uses` as in the example file.
+
+  Repository-specific context for the review (design policies, constraints, focus areas) should be written in the repository's `CLAUDE.md`, which Claude reads automatically.
+
+  :warning: Including `synchronize` in `pull_request` triggers a review on every push to the PR, consuming a large number of tokens. Use `types: [opened]` if you only want a review when the PR is created.
+
+  :warning: Secrets are not passed to workflows triggered by pull requests from forks, so this workflow does not run for external contributors' PRs.
+
+```yaml
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  claude_pr_review:
+    name: Claude PR review
+    uses: sbgisen/.github/.github/workflows/claude_pr_review.yml@main
+    secrets:
+      anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+```

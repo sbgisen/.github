@@ -1,0 +1,55 @@
+# This workflow runs Claude Code as an automated PR reviewer.
+# Learn more at https://github.com/anthropics/claude-code-action
+
+name: Claude PR Review
+
+on:
+  workflow_call:
+    inputs:
+      model:
+        description: Model used for the review.
+        required: false
+        type: string
+        default: claude-sonnet-5
+      max_turns:
+        description: Maximum number of agent turns to avoid runaway costs.
+        required: false
+        type: string
+        default: "10"
+    secrets:
+      anthropic_api_key:
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  claude_review:
+    runs-on: ubuntu-latest
+    name: Run Claude review on pull request
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Claude review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.anthropic_api_key }}
+          prompt: |
+            Review this pull request and post your feedback as a PR comment.
+
+            Focus on:
+            - Correctness bugs and edge cases
+            - Security issues
+            - Performance concerns
+            - Readability and maintainability
+
+            Be concise. Only report issues that matter; do not praise or restate the diff.
+            Write the review comment in Japanese.
+          claude_args: |
+            --model ${{ inputs.model }}
+            --max-turns ${{ inputs.max_turns }}
