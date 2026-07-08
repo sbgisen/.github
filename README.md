@@ -296,17 +296,21 @@ Claude reviews the diff following the same org-wide review instructions as GitHu
   Maximum number of agent turns to avoid runaway costs.
   Default is `50`.
 
-- secrets.anthropic_api_key
+#### Secrets
+
+Call the workflow with `secrets: inherit`. It reads the following secrets from the repository/organization directly (no explicit mapping needed):
+
+- ANTHROPIC_API_KEY
 
   Anthropic API key (Console credits).
-  Set the Anthropic API key to secrets on the repository/organization.
-  Provide either this or `claude_code_oauth_token`.
 
-- secrets.claude_code_oauth_token
+- CLAUDE_CODE_OAUTH_TOKEN
 
   OAuth token for a Claude Pro/Max subscription, generated locally with `claude setup-token`.
   Note that the token is tied to a personal subscription and shares its rate limits; prefer
-  `anthropic_api_key` for organization-wide use.
+  `ANTHROPIC_API_KEY` for organization-wide use.
+
+At least one of the two must be set. When both are set, the OAuth token is used.
 
 #### Usage
 
@@ -339,6 +343,5 @@ jobs:
     if: github.event.requested_team.slug == 'claude'
     name: Claude PR review
     uses: sbgisen/.github/.github/workflows/claude_pr_review.yml@main
-    secrets:
-      anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    secrets: inherit
 ```
