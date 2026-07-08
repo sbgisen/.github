@@ -294,7 +294,7 @@ Claude reviews the diff following the same org-wide review instructions as GitHu
 - inputs.max_turns (Optional)
 
   Maximum number of agent turns to avoid runaway costs.
-  Default is `10`.
+  Default is `50`.
 
 - secrets.anthropic_api_key
 
