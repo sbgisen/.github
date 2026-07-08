@@ -150,13 +150,19 @@ jobs:
               or read whole files. Skip this entirely when the package list is empty.
               When a finding relies on `.deps/` content, cite the dependency file path and line
               as evidence in the comment.
+            - For upstream packages installed as binaries (not in `.deps/`, e.g. nav2), rely on
+              your own knowledge when confident. Only when a finding hinges on such an interface
+              AND you are unsure, verify with at most two lookups (WebFetch the official docs,
+              or `gh api` the upstream source on GitHub) and cite what you found. If quick
+              verification is not possible, report the finding as [QUESTION] instead of
+              asserting it.
 
             Now review this pull request.
           # yamllint disable rule:line-length
           claude_args: |
             --model ${{ inputs.model }}
             --max-turns ${{ inputs.max_turns }}
-            --allowedTools "Read,Grep,Glob,Write,mcp__github_inline_comment__create_inline_comment,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:*),Bash(gh api:*)"
+            --allowedTools "Read,Grep,Glob,Write,WebFetch,mcp__github_inline_comment__create_inline_comment,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:*),Bash(gh api:*)"
 
       # Deterministic cleanup: posting a review as claude[bot] does not clear the pending
       # team review request, so remove it here instead of asking Claude to do it.
