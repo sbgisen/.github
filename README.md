@@ -298,8 +298,15 @@ Claude reviews the diff following the same org-wide review instructions as GitHu
 
 - secrets.anthropic_api_key
 
-  Use to call the Anthropic API.
+  Anthropic API key (Console credits).
   Set the Anthropic API key to secrets on the repository/organization.
+  Provide either this or `claude_code_oauth_token`.
+
+- secrets.claude_code_oauth_token
+
+  OAuth token for a Claude Pro/Max subscription, generated locally with `claude setup-token`.
+  Note that the token is tied to a personal subscription and shares its rate limits; prefer
+  `anthropic_api_key` for organization-wide use.
 
 #### Usage
 
