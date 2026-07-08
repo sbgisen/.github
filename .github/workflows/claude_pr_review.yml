@@ -167,8 +167,12 @@ jobs:
             --max-turns ${{ inputs.max_turns }}
             --allowedTools "Read,Grep,Glob,Write,WebFetch,mcp__github_inline_comment__create_inline_comment,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:*),Bash(gh api:*)"
 
-      # Deterministic cleanup: posting a review as claude[bot] does not clear the pending
-      # team review request, so remove it here instead of asking Claude to do it.
+      # Best-effort cleanup: posting a review as claude[bot] does not clear the pending
+      # team review request, so remove it here. Note that GitHub sometimes ignores this
+      # removal (the API returns success but the request silently survives) — a known
+      # unresolved platform bug that hits draft PRs in particular. When that happens,
+      # remove the reviewer badge manually.
+      # See: https://github.com/orgs/community/discussions/69208
       - name: Remove team review request
         if: github.event.requested_team.slug != ''
         env:
