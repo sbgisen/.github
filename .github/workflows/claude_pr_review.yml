@@ -64,6 +64,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.anthropic_api_key }}
+          show_full_output: true
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -77,7 +78,9 @@ jobs:
               are located under `.sbgisen-github/.github/instructions/`.
             - Submit everything as ONE formal pull request review, like a human reviewer:
               call `gh api repos/{owner}/{repo}/pulls/{number}/reviews --input -` with a JSON
-              payload (via stdin heredoc) containing the PR Overview as `body`, the verdict as
+              payload passed via a stdin heredoc. The command MUST start with `gh api`
+              (heredoc attached directly); piping from `echo` or `cat` is not permitted and
+              will be rejected. The payload contains the PR Overview as `body`, the verdict as
               `event` (APPROVE / COMMENT / REQUEST_CHANGES), and every finding as an entry in
               `comments[]` anchored to its file and line. Inline comments can only anchor to
               lines that are part of the diff.
