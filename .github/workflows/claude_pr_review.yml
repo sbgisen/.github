@@ -80,8 +80,11 @@ jobs:
           echo "files=$(echo "$files" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
           echo "found=$([ -n "$files" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
+      # Dependency checkout is best-effort: on failure the review still runs, just
+      # without the `.deps/` cross-repo context (the package list stays empty).
       - name: Set up SSH key
         if: steps.repos.outputs.found == 'true'
+        continue-on-error: true
         uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
         with:
           key: ${{ secrets.GISEN_ROBO_GIT }}
@@ -89,6 +92,7 @@ jobs:
 
       - name: Import dependency repositories
         if: steps.repos.outputs.found == 'true'
+        continue-on-error: true
         id: deps
         timeout-minutes: 5
         env:
