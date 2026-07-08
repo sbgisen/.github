@@ -91,12 +91,16 @@ jobs:
         if: steps.repos.outputs.found == 'true'
         id: deps
         timeout-minutes: 5
+        env:
+          # Pass file names through the environment, never expand them into the
+          # script text: PR authors control them (shell-injection vector).
+          REPOS_FILES: ${{ steps.repos.outputs.files }}
         run: |
           sudo wget -q https://github.com/ErickKramer/ripvcs/releases/download/v1.0.2/ripvcs_1.0.2_linux_amd64 \
             -O /usr/local/bin/rv
           sudo chmod +x /usr/local/bin/rv
           mkdir -p .deps
-          for f in ${{ steps.repos.outputs.files }}; do
+          for f in $REPOS_FILES; do
             (cd .deps && rv import -r -s -i "${GITHUB_WORKSPACE}/${f}")
           done
           {
