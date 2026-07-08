@@ -102,7 +102,10 @@ jobs:
           {
             echo "packages<<PKGEOF"
             find .deps -name package.xml | while read -r p; do
-              echo "$(grep -oPm1 '(?<=<name>)[^<]+' "$p"): $(dirname "$p")"
+              name=$(grep -oPm1 '(?<=<name>)[^<]+' "$p" || true)
+              if [ -n "$name" ]; then
+                echo "$name: $(dirname "$p")"
+              fi
             done
             echo "PKGEOF"
           } >> "$GITHUB_OUTPUT"
