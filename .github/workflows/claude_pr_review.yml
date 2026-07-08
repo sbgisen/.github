@@ -70,6 +70,43 @@ jobs:
           files=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | tr '\n' ',')
           echo "files=$files" >> "$GITHUB_OUTPUT"
 
+      # Dependency repositories (vcstool .repos/.rosinstall) are checked out so Claude can
+      # verify cross-repo interfaces locally instead of spending turns on API calls.
+      - name: Detect dependency files
+        id: repos
+        run: |
+          files=$(find . \( -path ./.sbgisen-github -o -path ./.deps \) -prune -o \
+            -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" -print | sort)
+          echo "files=$(echo "$files" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          echo "found=$([ -n "$files" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up SSH key
+        if: steps.repos.outputs.found == 'true'
+        uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
+        with:
+          key: ${{ secrets.GISEN_ROBO_GIT }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: Import dependency repositories
+        if: steps.repos.outputs.found == 'true'
+        id: deps
+        timeout-minutes: 5
+        run: |
+          sudo wget -q https://github.com/ErickKramer/ripvcs/releases/download/v1.0.2/ripvcs_1.0.2_linux_amd64 \
+            -O /usr/local/bin/rv
+          sudo chmod +x /usr/local/bin/rv
+          mkdir -p .deps
+          for f in ${{ steps.repos.outputs.files }}; do
+            (cd .deps && rv import -r -s -i "${GITHUB_WORKSPACE}/${f}")
+          done
+          {
+            echo "packages<<PKGEOF"
+            find .deps -name package.xml | while read -r p; do
+              echo "$(grep -oPm1 '(?<=<name>)[^<]+' "$p"): $(dirname "$p")"
+            done
+            echo "PKGEOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Claude review
         uses: anthropics/claude-code-action@v1
         with:
@@ -81,6 +118,8 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
             CHANGED FILES: ${{ steps.diff.outputs.files }}
+            DEPENDENCY PACKAGES (checked out under `.deps/` for reference):
+            ${{ steps.deps.outputs.packages }}
 
             Your review instructions are in `.sbgisen-github/.github/copilot-instructions.md`.
             Read that file first and follow it strictly, with these adjustments:
@@ -103,6 +142,12 @@ jobs:
               verdict with `gh pr review`.
             - The `.sbgisen-github/` directory is a checkout of the instructions repository,
               not part of this pull request. Never review or mention its contents as findings.
+            - The `.deps/` directory contains the dependency packages listed above, checked out
+              for read-only reference. Never review or flag their contents. Consult them ONLY
+              when a finding depends on a cross-repo interface (message/service/action
+              definitions, API signatures, parameter or topic names). Always Grep for the
+              specific symbol first and Read only the matched region; never browse directories
+              or read whole files. Skip this entirely when the package list is empty.
             - After submitting the review, you MUST remove the pending team review request.
               Read the event payload at $GITHUB_EVENT_PATH and take `requested_team.slug`
               (skip this step only when `requested_team` is absent), then run:

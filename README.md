@@ -312,6 +312,8 @@ Call the workflow with `secrets: inherit`. It reads the following secrets from t
 
 At least one of the two must be set. When both are set, the OAuth token is used.
 
+When the repository contains vcstool dependency files (`*.repos` / `*.rosinstall`), the workflow also reads the org-level `GISEN_ROBO_GIT` (SSH key) and `KNOWN_HOSTS` secrets to check out the dependency repositories under `.deps/`. Claude consults them read-only to verify cross-repo interfaces (message definitions, API signatures, parameter/topic names); they are never reviewed themselves.
+
 #### Usage
 
 1. Create a GitHub actions workflow file in your repository. e.g. `[repository_root]/.github/workflows/claude_pr_review.yml`
