@@ -71,7 +71,8 @@ jobs:
               repos/{owner}/{repo}/pulls/{number}/requested_reviewers -f "team_reviewers[]=<team-slug>"`
 
             Now review this pull request.
+          # yamllint disable rule:line-length
           claude_args: |
             --model ${{ inputs.model }}
             --max-turns ${{ inputs.max_turns }}
-            --allowedTools "Bash(gh pr review:*),Bash(gh api:*)"
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:*),Bash(gh api:*)"
