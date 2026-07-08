@@ -51,11 +51,24 @@ jobs:
           # TODO: Remove this ref once feature/claude-pr-review is merged into main.
           ref: feature/claude-pr-review
 
+      # Pre-compute PR facts so Claude does not spend turns discovering them.
+      - name: Get changed files
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          files=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | tr '\n' ',')
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+
       - name: Claude review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.anthropic_api_key }}
           prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            CHANGED FILES: ${{ steps.diff.outputs.files }}
+
             Your review instructions are in `.sbgisen-github/.github/copilot-instructions.md`.
             Read that file first and follow it strictly, with these adjustments:
 
