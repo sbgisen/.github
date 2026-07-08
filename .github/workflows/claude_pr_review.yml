@@ -58,8 +58,6 @@ jobs:
         with:
           repository: sbgisen/.github
           path: .sbgisen-github
-          # TODO: Remove this ref once feature/claude-pr-review is merged into main.
-          ref: feature/claude-pr-review
 
       # Pre-compute PR facts so Claude does not spend turns discovering them.
       - name: Get changed files
