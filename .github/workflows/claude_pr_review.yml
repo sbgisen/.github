@@ -31,7 +31,7 @@ jobs:
   claude_review:
     runs-on: ubuntu-latest
     name: Run Claude review on pull request
-    timeout-minutes: 15
+    timeout-minutes: 20
     # Cancel an in-flight review when a new one starts for the same PR.
     concurrency:
       group: claude-pr-review-${{ github.event.pull_request.number }}
