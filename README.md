@@ -280,7 +280,7 @@ jobs:
 ### Claude PR Review
 
 `claude_pr_review.yml` runs [Claude Code](https://github.com/anthropics/claude-code-action) as an automated PR reviewer.
-Claude reviews the diff following the org-wide review instructions embedded in the workflow prompt and submits its feedback as a formal PR review (approve / comment / request changes) with inline comments.
+Claude reviews the diff following the org-wide review instructions (`.github/pr-review-instructions.md` in this repository) and submits its feedback as a formal PR review (approve / comment / request changes) with inline comments. A repository can swap in its own instructions file via the `instructions_path` input.
 
 :warning: The [Claude GitHub App](https://github.com/apps/claude) must be installed on the organization (or the repository). Reviews are posted as `claude[bot]` via the app token, which the workflow obtains through OIDC (`id-token: write`).
 
@@ -295,6 +295,14 @@ Claude reviews the diff following the org-wide review instructions embedded in t
 
   Maximum number of agent turns to avoid runaway costs.
   Default is `50`.
+
+- inputs.instructions_path (Optional)
+
+  Workspace-relative path to the review instructions file. Set this to a file in your
+  repository (e.g. `.github/pr-review-instructions.md`) to use repository-specific
+  instructions.
+  Default is `.sbgisen-github/.github/pr-review-instructions.md` (the org-wide
+  instructions checked out from this repository).
 
 #### Secrets
 
