@@ -27,6 +27,14 @@ on:
         required: false
         type: string
         default: .sbgisen-github/.github/pr-review-instructions.md
+      config_ref:
+        description: >-
+          Git ref of sbgisen/.github to fetch the org configuration (review instructions
+          and formatter configs) from. Override this only when testing an unmerged branch
+          of the reusable workflow.
+        required: false
+        type: string
+        default: main
 
 permissions:
   contents: read
@@ -62,14 +70,14 @@ jobs:
 
       # Fetch the org-wide review instructions (the instructions_path default) and the
       # formatter configuration files (pyproject.toml, setup.cfg, .clang-format) that
-      # the instructions reference for suggestion formatting. Pinned to the commit of
-      # this reusable workflow itself, so the instructions always match the workflow
-      # version the caller references (including pre-merge branch testing).
+      # the instructions reference for suggestion formatting. github.job_workflow_sha
+      # would be the natural ref here, but it is empty when the reusable workflow is
+      # referenced by branch name, so the ref is an explicit input instead.
       - name: Checkout org configuration
         uses: actions/checkout@v6
         with:
           repository: sbgisen/.github
-          ref: ${{ github.job_workflow_sha }}
+          ref: ${{ inputs.config_ref }}
           path: .sbgisen-github
 
       # Fail fast when the instructions file is missing (e.g. a typo in the caller's

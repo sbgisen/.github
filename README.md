@@ -304,6 +304,13 @@ Claude reviews the diff following the org-wide review instructions (`.github/pr-
   Default is `.sbgisen-github/.github/pr-review-instructions.md` (the org-wide
   instructions checked out from this repository).
 
+- inputs.config_ref (Optional)
+
+  Git ref of this repository (sbgisen/.github) to fetch the org-wide review
+  instructions and formatter configs from.
+  Default is `main`. Override this only when testing an unmerged branch of the
+  reusable workflow.
+
 #### Secrets
 
 Call the workflow with `secrets: inherit`. It reads the following secrets from the repository/organization directly (no explicit mapping needed):
