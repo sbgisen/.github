@@ -280,7 +280,7 @@ jobs:
 ### Claude PR Review
 
 `claude_pr_review.yml` runs [Claude Code](https://github.com/anthropics/claude-code-action) as an automated PR reviewer.
-Claude reviews the diff following the same org-wide review instructions as GitHub Copilot code review (`.github/copilot-instructions.md` in this repository) and submits its feedback as a formal PR review (approve / comment / request changes) with inline comments.
+Claude reviews the diff following the org-wide review instructions embedded in the workflow prompt and submits its feedback as a formal PR review (approve / comment / request changes) with inline comments.
 
 :warning: The [Claude GitHub App](https://github.com/apps/claude) must be installed on the organization (or the repository). Reviews are posted as `claude[bot]` via the app token, which the workflow obtains through OIDC (`id-token: write`).
 
