@@ -172,7 +172,7 @@ jobs:
         run: echo "ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
       - name: Claude review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@e90deca47693f9457b72f2b53c17d7c445a87342 # v1.0.171
         with:
           # The OAuth token wins when both secrets are set (passing both is undefined behavior).
           anthropic_api_key: ${{ secrets.claude_code_oauth_token == '' && secrets.anthropic_api_key || '' }}
