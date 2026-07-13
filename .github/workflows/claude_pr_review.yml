@@ -166,6 +166,11 @@ jobs:
             echo "PKGEOF"
           } >> "$GITHUB_OUTPUT"
 
+      # Timestamp used to detect whether Claude submitted a review during this run.
+      - name: Record review start time
+        id: start
+        run: echo "ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Claude review
         uses: anthropics/claude-code-action@v1
         with:
@@ -173,6 +178,7 @@ jobs:
           anthropic_api_key: ${{ secrets.claude_code_oauth_token == '' && secrets.anthropic_api_key || '' }}
           claude_code_oauth_token: ${{ secrets.claude_code_oauth_token }}
           show_full_output: false
+          # yamllint disable rule:line-length
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -187,14 +193,18 @@ jobs:
             - Submit everything as ONE formal pull request review, like a human reviewer.
               First write the JSON payload to `review-payload.json` in the workspace root
               using the Write tool (never via shell redirection or heredoc), then run:
-              `gh api repos/{owner}/{repo}/pulls/{number}/reviews --input review-payload.json`
+              `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews --input review-payload.json`
               The payload contains the PR Overview as `body`, the verdict as `event`
               (APPROVE / COMMENT / REQUEST_CHANGES), and every finding as an entry in
               `comments[]` anchored to its file and line. Inline comments can only anchor to
               lines that are part of the diff.
-            - If that request fails after one retry, fall back to posting findings individually
-              with `mcp__github_inline_comment__create_inline_comment` and submitting the
-              verdict with `gh pr review`.
+            - That exact `gh api` command is the only one the sandbox allows. When the request
+              fails (e.g. a comment anchored outside the diff), fix it by rewriting
+              `review-payload.json` and re-running the same command, never by changing the
+              command itself.
+            - If the request still fails after one retry, do NOT post the findings any other
+              way (no individual comments); end the run reporting the error. The workflow
+              fails when no review has been submitted.
             - Run Bash commands one at a time. Never chain commands with `&&`, `;` or pipes;
               chained commands are rejected by the sandbox.
             - The `.sbgisen-github/` directory is a checkout of the `sbgisen/.github`
@@ -212,17 +222,34 @@ jobs:
               as evidence in the comment.
             - For upstream packages installed as binaries (not in `.deps/`, e.g. nav2), rely on
               your own knowledge when confident. Only when a finding hinges on such an interface
-              AND you are unsure, verify with at most two lookups (WebFetch the official docs,
-              or `gh api` the upstream source on GitHub) and cite what you found. If quick
+              AND you are unsure, verify with at most two WebFetch lookups (the official docs
+              or the upstream source on GitHub) and cite what you found. If quick
               verification is not possible, report the finding as [QUESTION] instead of
               asserting it.
 
             Now review this pull request.
-          # yamllint disable rule:line-length
           claude_args: |
             --model ${{ inputs.model }}
             --max-turns ${{ inputs.max_turns }}
-            --allowedTools "Read,Grep,Glob,Write,WebFetch,mcp__github_inline_comment__create_inline_comment,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:*),Bash(gh api:*)"
+            --allowedTools "Read,Grep,Glob,Write,WebFetch,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews --input review-payload.json)"
+
+      # There is deliberately no fallback posting path: when the Reviews API request does
+      # not go through, the run must fail visibly instead of leaving scattered comments.
+      # The agent finishing without a submitted review still counts as action success, so
+      # verify here and fail the job (skipping the review-request cleanup below, which
+      # keeps the reviewer badge in place for a retry).
+      - name: Verify review was submitted
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED_AT: ${{ steps.start.outputs.ts }}
+        run: |
+          count=$(gh api --paginate \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            --jq '[.[] | select(.user.login == "claude[bot]" and .submitted_at >= env.STARTED_AT)] | length')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Claude finished without submitting a review."
+            exit 1
+          fi
 
       # Best-effort cleanup: posting a review as claude[bot] does not clear the pending
       # team review request, so remove it here. Note that GitHub sometimes ignores this
