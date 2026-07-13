@@ -205,6 +205,12 @@ jobs:
             - If the request still fails after one retry, do NOT post the findings any other
               way (no individual comments); end the run reporting the error. The workflow
               fails when no review has been submitted.
+            - The sandbox allows ONLY these Bash commands: `git diff`, `git log`, `git show`,
+              `git blame`, `git fetch`, `gh pr view`, `gh pr diff`, and the exact review
+              submission command above. Every other shell command is rejected — do not try
+              `cat`, `ls`, `head`, `find`, `git status`, `git branch`, `gh pr comment`,
+              `gh pr review`, or any other `gh api` call (even a read-only GET). Access
+              files with the Read, Grep and Glob tools instead of shell commands.
             - Run Bash commands one at a time. Never chain commands with `&&`, `;` or pipes;
               chained commands are rejected by the sandbox.
             - The `.sbgisen-github/` directory is a checkout of the `sbgisen/.github`
