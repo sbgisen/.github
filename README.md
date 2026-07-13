@@ -313,21 +313,29 @@ Claude reviews the diff following the org-wide review instructions (`.github/pr-
 
 #### Secrets
 
-Call the workflow with `secrets: inherit`. It reads the following secrets from the repository/organization directly (no explicit mapping needed):
+Pass the secrets explicitly as in the usage example below:
 
-- ANTHROPIC_API_KEY
+- secrets.anthropic_api_key (Optional)
 
   Anthropic API key (Console credits).
 
-- CLAUDE_CODE_OAUTH_TOKEN
+- secrets.claude_code_oauth_token (Optional)
 
   OAuth token for a Claude Pro/Max subscription, generated locally with `claude setup-token`.
   Note that the token is tied to a personal subscription and shares its rate limits; prefer
-  `ANTHROPIC_API_KEY` for organization-wide use.
+  `anthropic_api_key` for organization-wide use.
 
 At least one of the two must be set. When both are set, the OAuth token is used.
 
-When the repository contains vcstool dependency files (`*.repos` / `*.rosinstall`), the workflow also reads the org-level `GISEN_ROBO_GIT` (SSH key) and `KNOWN_HOSTS` secrets to check out the dependency repositories under `.deps/`. Claude consults them read-only to verify cross-repo interfaces (message definitions, API signatures, parameter/topic names); they are never reviewed themselves.
+- secrets.ssh_key (Required)
+
+  SSH private key used to check out dependency repositories.
+
+- secrets.known_hosts (Required)
+
+  SSH known_hosts entries for the dependency repository hosts.
+
+When the repository contains vcstool dependency files (`*.repos` / `*.rosinstall`), the workflow uses `ssh_key` and `known_hosts` to check out the dependency repositories under `.deps/`. Claude consults them read-only to verify cross-repo interfaces (message definitions, API signatures, parameter/topic names); they are never reviewed themselves.
 
 #### Usage
 
@@ -360,5 +368,9 @@ jobs:
     if: github.event.requested_team.slug == 'claude'
     name: Claude PR review
     uses: sbgisen/.github/.github/workflows/claude_pr_review.yml@main
-    secrets: inherit
+    secrets:
+      anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+      claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ssh_key: ${{ secrets.GISEN_ROBO_GIT }}
+      known_hosts: ${{ secrets.KNOWN_HOSTS }}
 ```

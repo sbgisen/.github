@@ -1,8 +1,8 @@
 # This workflow runs Claude Code as an automated PR reviewer.
 # Learn more at https://github.com/anthropics/claude-code-action
 #
-# Call this workflow with `secrets: inherit`. It reads the ANTHROPIC_API_KEY and/or
-# CLAUDE_CODE_OAUTH_TOKEN secrets from the calling repository/organization directly.
+# Pass the secrets explicitly (see the `secrets` section below). At least one of
+# anthropic_api_key / claude_code_oauth_token must be set.
 
 name: Claude PR Review
 
@@ -35,6 +35,23 @@ on:
         required: false
         type: string
         default: main
+    secrets:
+      anthropic_api_key:
+        description: >-
+          Anthropic API key (Console credits). At least one of anthropic_api_key /
+          claude_code_oauth_token is required; the OAuth token wins when both are set.
+        required: false
+      claude_code_oauth_token:
+        description: >-
+          OAuth token for a Claude Pro/Max subscription, generated with
+          `claude setup-token`.
+        required: false
+      ssh_key:
+        description: SSH private key used to check out dependency repositories.
+        required: true
+      known_hosts:
+        description: SSH known_hosts entries for the dependency repository hosts.
+        required: true
 
 permissions:
   contents: read
@@ -53,13 +70,14 @@ jobs:
       group: claude-pr-review-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
-      # Fail fast when no credential is available (workflow_call cannot express this).
+      # Fail fast when no credential is available ("at least one of the two" cannot be
+      # expressed with `required` in workflow_call).
       - name: Check credentials
         env:
-          HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+          HAS_CREDENTIAL: ${{ secrets.anthropic_api_key != '' || secrets.claude_code_oauth_token != '' }}
         run: |
           if [ "$HAS_CREDENTIAL" != "true" ]; then
-            echo "::error::Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN and use 'secrets: inherit'."
+            echo "::error::Pass at least one of the anthropic_api_key / claude_code_oauth_token secrets."
             exit 1
           fi
 
@@ -117,8 +135,8 @@ jobs:
         continue-on-error: true
         uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
         with:
-          key: ${{ secrets.GISEN_ROBO_GIT }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+          key: ${{ secrets.ssh_key }}
+          known_hosts: ${{ secrets.known_hosts }}
 
       - name: Import dependency repositories
         if: steps.repos.outputs.found == 'true'
@@ -152,8 +170,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           # The OAuth token wins when both secrets are set (passing both is undefined behavior).
-          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' && secrets.ANTHROPIC_API_KEY || '' }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.claude_code_oauth_token == '' && secrets.anthropic_api_key || '' }}
+          claude_code_oauth_token: ${{ secrets.claude_code_oauth_token }}
           show_full_output: false
           prompt: |
             REPO: ${{ github.repository }}
