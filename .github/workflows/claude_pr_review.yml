@@ -26,7 +26,7 @@ on:
           from sbgisen/.github.
         required: false
         type: string
-        default: .sbgisen-github/.github/pr-review-instructions.md
+        default: .sbgisen-github/.github/copilot-instructions.md
       config_ref:
         description: >-
           Git ref of sbgisen/.github to fetch the org configuration (review instructions
