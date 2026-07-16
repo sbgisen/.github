@@ -1,0 +1,276 @@
+# This workflow runs Claude Code as an automated PR reviewer.
+# Learn more at https://github.com/anthropics/claude-code-action
+#
+# Pass the secrets explicitly (see the `secrets` section below). At least one of
+# anthropic_api_key / claude_code_oauth_token must be set.
+
+name: Claude PR Review
+
+on:
+  workflow_call:
+    inputs:
+      model:
+        description: Model used for the review.
+        required: false
+        type: string
+        default: claude-sonnet-5
+      max_turns:
+        description: Maximum number of agent turns to avoid runaway costs.
+        required: false
+        type: string
+        default: "50"
+      instructions_path:
+        description: >-
+          Workspace-relative path to the review instructions file. Override this to use
+          repository-specific instructions; the default is the org-wide file checked out
+          from sbgisen/.github.
+        required: false
+        type: string
+        default: .sbgisen-github/.github/copilot-instructions.md
+      config_ref:
+        description: >-
+          Git ref of sbgisen/.github to fetch the org configuration (review instructions
+          and formatter configs) from. Override this only when testing an unmerged branch
+          of the reusable workflow.
+        required: false
+        type: string
+        default: main
+    secrets:
+      anthropic_api_key:
+        description: >-
+          Anthropic API key (Console credits). At least one of anthropic_api_key /
+          claude_code_oauth_token is required; the OAuth token wins when both are set.
+        required: false
+      claude_code_oauth_token:
+        description: >-
+          OAuth token for a Claude Pro/Max subscription, generated with
+          `claude setup-token`.
+        required: false
+      ssh_key:
+        description: SSH private key used to check out dependency repositories.
+        required: true
+      known_hosts:
+        description: SSH known_hosts entries for the dependency repository hosts.
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  # Required to exchange an OIDC token for the Claude GitHub App token.
+  id-token: write
+
+jobs:
+  claude_review:
+    runs-on: ubuntu-latest
+    name: Run Claude review on pull request
+    timeout-minutes: 20
+    # Cancel an in-flight review when a new one starts for the same PR.
+    concurrency:
+      group: claude-pr-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      # Fail fast when no credential is available ("at least one of the two" cannot be
+      # expressed with `required` in workflow_call).
+      - name: Check credentials
+        env:
+          HAS_CREDENTIAL: ${{ secrets.anthropic_api_key != '' || secrets.claude_code_oauth_token != '' }}
+        run: |
+          if [ "$HAS_CREDENTIAL" != "true" ]; then
+            echo "::error::Pass at least one of the anthropic_api_key / claude_code_oauth_token secrets."
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Fetch the org-wide review instructions (the instructions_path default) and the
+      # formatter configuration files (pyproject.toml, setup.cfg, .clang-format) that
+      # the instructions reference for suggestion formatting. github.job_workflow_sha
+      # would be the natural ref here, but it is empty when the reusable workflow is
+      # referenced by branch name, so the ref is an explicit input instead.
+      - name: Checkout org configuration
+        uses: actions/checkout@v6
+        with:
+          repository: sbgisen/.github
+          ref: ${{ inputs.config_ref }}
+          path: .sbgisen-github
+
+      # Fail fast when the instructions file is missing (e.g. a typo in the caller's
+      # instructions_path input).
+      - name: Check instructions file
+        env:
+          INSTRUCTIONS_PATH: ${{ inputs.instructions_path }}
+        run: |
+          if [ ! -f "$INSTRUCTIONS_PATH" ]; then
+            echo "::error::Review instructions file not found: $INSTRUCTIONS_PATH"
+            exit 1
+          fi
+
+      # Pre-compute PR facts so Claude does not spend turns discovering them.
+      - name: Get changed files
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          files=$(gh pr diff ${{ github.event.pull_request.number }} --name-only | tr '\n' ',')
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+
+      # Dependency repositories (vcstool .repos/.rosinstall) are checked out so Claude can
+      # verify cross-repo interfaces locally instead of spending turns on API calls.
+      - name: Detect dependency files
+        id: repos
+        run: |
+          files=$(find . \( -path ./.sbgisen-github -o -path ./.deps \) -prune -o \
+            -type f -regextype posix-egrep -regex "\./.+\.(rosinstall|repos)" -print | sort)
+          echo "files=$(echo "$files" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          echo "found=$([ -n "$files" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      # Dependency checkout is best-effort: on failure the review still runs, just
+      # without the `.deps/` cross-repo context (the package list stays empty).
+      - name: Set up SSH key
+        if: steps.repos.outputs.found == 'true'
+        continue-on-error: true
+        uses: shimataro/ssh-key-action@02d189fc92ea6279c0fea0e7a259da1b4f1d22a5 # v2.5.0
+        with:
+          key: ${{ secrets.ssh_key }}
+          known_hosts: ${{ secrets.known_hosts }}
+
+      - name: Import dependency repositories
+        if: steps.repos.outputs.found == 'true'
+        continue-on-error: true
+        id: deps
+        timeout-minutes: 5
+        env:
+          # Pass file names through the environment, never expand them into the
+          # script text: PR authors control them (shell-injection vector).
+          REPOS_FILES: ${{ steps.repos.outputs.files }}
+        run: |
+          sudo wget -q https://github.com/ErickKramer/ripvcs/releases/download/v1.0.2/ripvcs_1.0.2_linux_amd64 \
+            -O /usr/local/bin/rv
+          sudo chmod +x /usr/local/bin/rv
+          mkdir -p .deps
+          for f in $REPOS_FILES; do
+            (cd .deps && rv import -r -s -i "${GITHUB_WORKSPACE}/${f}")
+          done
+          {
+            echo "packages<<PKGEOF"
+            find .deps -name package.xml | while read -r p; do
+              name=$(grep -oPm1 '(?<=<name>)[^<]+' "$p" || true)
+              if [ -n "$name" ]; then
+                echo "$name: $(dirname "$p")"
+              fi
+            done
+            echo "PKGEOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # Timestamp used to detect whether Claude submitted a review during this run.
+      - name: Record review start time
+        id: start
+        run: echo "ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Claude review
+        uses: anthropics/claude-code-action@e90deca47693f9457b72f2b53c17d7c445a87342 # v1.0.171
+        with:
+          # The OAuth token wins when both secrets are set (passing both is undefined behavior).
+          anthropic_api_key: ${{ secrets.claude_code_oauth_token == '' && secrets.anthropic_api_key || '' }}
+          claude_code_oauth_token: ${{ secrets.claude_code_oauth_token }}
+          show_full_output: false
+          # yamllint disable rule:line-length
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            CHANGED FILES: ${{ steps.diff.outputs.files }}
+            DEPENDENCY PACKAGES (checked out under `.deps/` for reference):
+            ${{ steps.deps.outputs.packages }}
+
+            Your review instructions are in `${{ inputs.instructions_path }}`.
+            Read that file first and follow it strictly, together with these
+            workflow-specific rules:
+
+            - Submit everything as ONE formal pull request review, like a human reviewer.
+              First write the JSON payload to `review-payload.json` in the workspace root
+              using the Write tool (never via shell redirection or heredoc), then run:
+              `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews --input review-payload.json`
+              The payload contains the PR Overview as `body`, the verdict as `event`
+              (APPROVE / COMMENT / REQUEST_CHANGES), and every finding as an entry in
+              `comments[]` anchored to its file and line. Inline comments can only anchor to
+              lines that are part of the diff.
+            - That exact `gh api` command is the only one the sandbox allows. When the request
+              fails (e.g. a comment anchored outside the diff), fix it by rewriting
+              `review-payload.json` and re-running the same command, never by changing the
+              command itself.
+            - If the request still fails after one retry, do NOT post the findings any other
+              way (no individual comments); end the run reporting the error. The workflow
+              fails when no review has been submitted.
+            - The sandbox allows ONLY these Bash commands: `git diff`, `git log`, `git show`,
+              `git blame`, `git fetch`, `gh pr view`, `gh pr diff`, and the exact review
+              submission command above. Every other shell command is rejected — do not try
+              `cat`, `ls`, `head`, `find`, `git status`, `git branch`, `gh pr comment`,
+              `gh pr review`, or any other `gh api` call (even a read-only GET). Access
+              files with the Read, Grep and Glob tools instead of shell commands.
+            - Run Bash commands one at a time. Never chain commands with `&&`, `;` or pipes;
+              chained commands are rejected by the sandbox.
+            - The `.sbgisen-github/` directory is a checkout of the `sbgisen/.github`
+              org-wide configuration repository; the org-wide formatter configuration files
+              referenced by the instructions are at its root (e.g. `.sbgisen-github/.clang-format`).
+              It is not part of this pull request. Never review or mention its contents as
+              findings.
+            - The `.deps/` directory contains the dependency packages listed above, checked out
+              for read-only reference. Never review or flag their contents. Consult them ONLY
+              when a finding depends on a cross-repo interface (message/service/action
+              definitions, API signatures, parameter or topic names). Always Grep for the
+              specific symbol first and Read only the matched region; never browse directories
+              or read whole files. Skip this entirely when the package list is empty.
+              When a finding relies on `.deps/` content, cite the dependency file path and line
+              as evidence in the comment.
+            - For upstream packages installed as binaries (not in `.deps/`, e.g. nav2), rely on
+              your own knowledge when confident. Only when a finding hinges on such an interface
+              AND you are unsure, verify with at most two WebFetch lookups (the official docs
+              or the upstream source on GitHub) and cite what you found. If quick
+              verification is not possible, report the finding as [QUESTION] instead of
+              asserting it.
+
+            Now review this pull request.
+          claude_args: |
+            --model ${{ inputs.model }}
+            --max-turns ${{ inputs.max_turns }}
+            --allowedTools "Read,Grep,Glob,Write,WebFetch,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews --input review-payload.json)"
+
+      # There is deliberately no fallback posting path: when the Reviews API request does
+      # not go through, the run must fail visibly instead of leaving scattered comments.
+      # The agent finishing without a submitted review still counts as action success, so
+      # verify here and fail the job (skipping the review-request cleanup below, which
+      # keeps the reviewer badge in place for a retry).
+      - name: Verify review was submitted
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STARTED_AT: ${{ steps.start.outputs.ts }}
+        run: |
+          count=$(gh api --paginate \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            --jq '[.[] | select(.user.login == "claude[bot]" and .submitted_at >= env.STARTED_AT)] | length')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::Claude finished without submitting a review."
+            exit 1
+          fi
+
+      # Best-effort cleanup: posting a review as claude[bot] does not clear the pending
+      # team review request, so remove it here. Note that GitHub sometimes ignores this
+      # removal (the API returns success but the request silently survives) — a known
+      # unresolved platform bug that hits draft PRs in particular. When that happens,
+      # remove the reviewer badge manually.
+      # See: https://github.com/orgs/community/discussions/69208
+      - name: Remove team review request
+        if: github.event.requested_team.slug != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The endpoint requires the "reviewers" field even when removing only a team.
+          printf '{"reviewers": [], "team_reviewers": ["%s"]}' \
+            "${{ github.event.requested_team.slug }}" \
+            | gh api --method DELETE \
+              "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers" \
+              --input -

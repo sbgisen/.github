@@ -276,3 +276,101 @@ jobs:
     secrets:
       openai_key: ${{ secrets.OPENAI_KEY }}
 ```
+
+### Claude PR Review
+
+`claude_pr_review.yml` runs [Claude Code](https://github.com/anthropics/claude-code-action) as an automated PR reviewer.
+Claude reviews the diff following the org-wide review instructions (`.github/copilot-instructions.md` in this repository) and submits its feedback as a formal PR review (approve / comment / request changes) with inline comments. A repository can swap in its own instructions file via the `instructions_path` input.
+
+:warning: The [Claude GitHub App](https://github.com/apps/claude) must be installed on the organization (or the repository). Reviews are posted as `claude[bot]` via the app token, which the workflow obtains through OIDC (`id-token: write`).
+
+#### Input parameters
+
+- inputs.model (Optional)
+
+  Model used for the review.
+  Default is `claude-sonnet-5`.
+
+- inputs.max_turns (Optional)
+
+  Maximum number of agent turns to avoid runaway costs.
+  Default is `50`.
+
+- inputs.instructions_path (Optional)
+
+  Workspace-relative path to the review instructions file. Set this to a file in your
+  repository (e.g. `.github/copilot-instructions.md`) to use repository-specific
+  instructions.
+  Default is `.sbgisen-github/.github/copilot-instructions.md` (the org-wide
+  instructions checked out from this repository).
+
+- inputs.config_ref (Optional)
+
+  Git ref of this repository (sbgisen/.github) to fetch the org-wide review
+  instructions and formatter configs from.
+  Default is `main`. Override this only when testing an unmerged branch of the
+  reusable workflow.
+
+#### Secrets
+
+Pass the secrets explicitly as in the usage example below:
+
+- secrets.anthropic_api_key (Optional)
+
+  Anthropic API key (Console credits).
+
+- secrets.claude_code_oauth_token (Optional)
+
+  OAuth token for a Claude Pro/Max subscription, generated locally with `claude setup-token`.
+  Note that the token is tied to a personal subscription and shares its rate limits; prefer
+  `anthropic_api_key` for organization-wide use.
+
+At least one of the two must be set. When both are set, the OAuth token is used.
+
+- secrets.ssh_key (Required)
+
+  SSH private key used to check out dependency repositories.
+
+- secrets.known_hosts (Required)
+
+  SSH known_hosts entries for the dependency repository hosts.
+
+When the repository contains vcstool dependency files (`*.repos` / `*.rosinstall`), the workflow uses `ssh_key` and `known_hosts` to check out the dependency repositories under `.deps/`. Claude consults them read-only to verify cross-repo interfaces (message definitions, API signatures, parameter/topic names); they are never reviewed themselves.
+
+#### Usage
+
+1. Create a GitHub actions workflow file in your repository. e.g. `[repository_root]/.github/workflows/claude_pr_review.yml`
+2. Just add `uses` as in the example file.
+
+  Repository-specific context for the review (design policies, constraints, focus areas) should be written in the repository's `CLAUDE.md`, which Claude reads automatically.
+
+  The example below triggers a review when the `sbgisen/claude` team is requested as a reviewer on the PR (the team needs read access to the repository to appear in the Reviewers list). To also review every new PR automatically, add `opened` to `types` and extend the `if` condition with `github.event.action == 'opened'`.
+
+  :warning: Triggering on `synchronize` runs a review on every push to the PR, consuming a large number of tokens.
+
+  :warning: Secrets are not passed to workflows triggered by pull requests from forks, so this workflow does not run for external contributors' PRs.
+
+```yaml
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [review_requested]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  claude_pr_review:
+    if: github.event.requested_team.slug == 'claude'
+    name: Claude PR review
+    uses: sbgisen/.github/.github/workflows/claude_pr_review.yml@main
+    secrets:
+      anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+      claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ssh_key: ${{ secrets.GISEN_ROBO_GIT }}
+      known_hosts: ${{ secrets.KNOWN_HOSTS }}
+```
