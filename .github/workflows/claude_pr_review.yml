@@ -184,7 +184,8 @@ jobs:
           # The OAuth token wins when both secrets are set (passing both is undefined behavior).
           anthropic_api_key: ${{ secrets.claude_code_oauth_token == '' && secrets.anthropic_api_key || '' }}
           claude_code_oauth_token: ${{ secrets.claude_code_oauth_token }}
-          show_full_output: false
+          # Temporarily enabled to trace the in-action badge-removal experiment.
+          show_full_output: true
           # yamllint disable rule:line-length
           prompt: |
             REPO: ${{ github.repository }}
