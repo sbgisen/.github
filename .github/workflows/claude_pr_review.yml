@@ -52,6 +52,13 @@ on:
       known_hosts:
         description: SSH known_hosts entries for the dependency repository hosts.
         required: true
+      badge_cleanup_token:
+        description: >-
+          Fine-grained PAT used to remove the team review request (the reviewer badge)
+          after the review is posted. Needs organization Members (read) and repository
+          Pull requests (write). The default GITHUB_TOKEN cannot resolve org teams and
+          would make the removal a silent no-op, so this token is required.
+        required: true
 
 permissions:
   contents: read
@@ -257,16 +264,15 @@ jobs:
             exit 1
           fi
 
-      # Best-effort cleanup: posting a review as claude[bot] does not clear the pending
-      # team review request, so remove it here. Note that GitHub sometimes ignores this
-      # removal (the API returns success but the request silently survives) — a known
-      # unresolved platform bug that hits draft PRs in particular. When that happens,
-      # remove the reviewer badge manually.
-      # See: https://github.com/orgs/community/discussions/69208
+      # Cleanup: posting a review as claude[bot] does not clear the pending team review
+      # request, so remove it here. The badge_cleanup_token PAT is used instead of the
+      # default GITHUB_TOKEN because the latter cannot resolve org teams
+      # (see https://github.com/actions/github-script/issues/284) and this DELETE
+      # silently ignores unresolvable teams while returning 200.
       - name: Remove team review request
         if: github.event.requested_team.slug != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.badge_cleanup_token }}
         run: |
           # The endpoint requires the "reviewers" field even when removing only a team.
           printf '{"reviewers": [], "team_reviewers": ["%s"]}' \
