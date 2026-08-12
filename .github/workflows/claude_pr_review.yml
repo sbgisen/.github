@@ -205,25 +205,16 @@ jobs:
               (APPROVE / COMMENT / REQUEST_CHANGES), and every finding as an entry in
               `comments[]` anchored to its file and line. Inline comments can only anchor to
               lines that are part of the diff.
-            - Those exact `gh api` commands (review submission above, request removal below)
-              are the only ones the sandbox allows. When a request fails (e.g. a comment
-              anchored outside the diff), fix it by rewriting the payload file and re-running
-              the same command, never by changing the command itself.
-            - If the review request still fails after one retry, do NOT post the findings any
-              other way (no individual comments); end the run reporting the error. The
-              workflow fails when no review has been submitted.
-            - After the review is submitted successfully, clear the pending team review
-              request (the reviewer badge): write `removal-payload.json` in the workspace
-              root containing exactly
-              {"reviewers": [], "team_reviewers": ["${{ github.event.requested_team.slug }}"]}
-              using the Write tool, then run:
-              `gh api --method DELETE repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers --input removal-payload.json`
-              This cleanup is best-effort: retry at most once and end the run normally even
-              if it fails.
+            - That exact `gh api` command is the only one the sandbox allows. When the request
+              fails (e.g. a comment anchored outside the diff), fix it by rewriting
+              `review-payload.json` and re-running the same command, never by changing the
+              command itself.
+            - If the request still fails after one retry, do NOT post the findings any other
+              way (no individual comments); end the run reporting the error. The workflow
+              fails when no review has been submitted.
             - The sandbox allows ONLY these Bash commands: `git diff`, `git log`, `git show`,
               `git blame`, `git fetch`, `gh pr view`, `gh pr diff`, and the exact review
-              submission and request removal commands above. Every other shell command is
-              rejected — do not try
+              submission command above. Every other shell command is rejected — do not try
               `cat`, `ls`, `head`, `find`, `git status`, `git branch`, `gh pr comment`,
               `gh pr review`, or any other `gh api` call (even a read-only GET). Access
               files with the Read, Grep and Glob tools instead of shell commands.
@@ -253,7 +244,7 @@ jobs:
           claude_args: |
             --model ${{ inputs.model }}
             --max-turns ${{ inputs.max_turns }}
-            --allowedTools "Read,Grep,Glob,Write,WebFetch,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews --input review-payload.json),Bash(gh api --method DELETE repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers --input removal-payload.json)"
+            --allowedTools "Read,Grep,Glob,Write,WebFetch,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git blame:*),Bash(git fetch:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews --input review-payload.json)"
 
       # There is deliberately no fallback posting path: when the Reviews API request does
       # not go through, the run must fail visibly instead of leaving scattered comments.
