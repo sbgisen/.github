@@ -242,8 +242,12 @@ jobs:
       # There is deliberately no fallback posting path: when the Reviews API request does
       # not go through, the run must fail visibly instead of leaving scattered comments.
       # The agent finishing without a submitted review still counts as action success, so
-      # verify here and fail the job (skipping the review-request cleanup below, which
-      # keeps the reviewer badge in place for a retry).
+      # verify here and fail the job.
+      #
+      # The pending team review request (the reviewer badge) is NOT cleared automatically;
+      # remove it manually after the review lands. Tokens available to this workflow
+      # (GITHUB_TOKEN and the claude-code-action app token) cannot resolve org teams, so
+      # the removal DELETE silently no-ops while returning 200 — see sbgisen/.github#290.
       - name: Verify review was submitted
         env:
           GH_TOKEN: ${{ github.token }}
@@ -256,21 +260,3 @@ jobs:
             echo "::error::Claude finished without submitting a review."
             exit 1
           fi
-
-      # Best-effort cleanup: posting a review as claude[bot] does not clear the pending
-      # team review request, so remove it here. Note that GitHub sometimes ignores this
-      # removal (the API returns success but the request silently survives) — a known
-      # unresolved platform bug that hits draft PRs in particular. When that happens,
-      # remove the reviewer badge manually.
-      # See: https://github.com/orgs/community/discussions/69208
-      - name: Remove team review request
-        if: github.event.requested_team.slug != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # The endpoint requires the "reviewers" field even when removing only a team.
-          printf '{"reviewers": [], "team_reviewers": ["%s"]}' \
-            "${{ github.event.requested_team.slug }}" \
-            | gh api --method DELETE \
-              "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers" \
-              --input -
