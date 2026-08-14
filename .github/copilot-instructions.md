@@ -106,7 +106,7 @@ newer feature (C++20 ranges/`std::format`, 3.12-only syntax, a newer ROS API), r
    structure:
 
    ```markdown
-   # SBGISEN PR REVIEW 2026
+   ## SBGISEN PR REVIEW 2026
 
    ### Summary
    - <what the change does — 2–4 short bullets, one line each, English>
@@ -122,7 +122,7 @@ newer feature (C++20 ranges/`std::format`, 3.12-only syntax, a newer ROS API), r
    ```
 
    The first line must be the marker sentence `SBGISEN PR REVIEW 2026`, rendered as
-   the `#` heading shown above. Keep the two language blocks fully separate — never
+   the `##` heading shown above. Keep the two language blocks fully separate — never
    mix English and Japanese in one line — and state the SAME verdict in both.
    Verdict meanings: **APPROVE** (sound) / **COMMENT** (questions, no block) /
    **REQUEST_CHANGES** (≥1 `[MUST-FIX]`).
