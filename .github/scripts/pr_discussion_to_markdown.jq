@@ -14,7 +14,11 @@ def body_quote(s):
 | $pr.reviewThreads.nodes as $threads
 | $pr.comments.nodes as $comments
 | [
-    "# Discussion already posted on this pull request",
+    "# Pull request description and discussion",
+    "",
+    "## Title and description",
+    body_quote(if ($pr.body // "") == "" then $pr.title
+               else $pr.title + "\n\n" + $pr.body end),
     "",
     "## Submitted reviews",
     (if ($reviews | length) == 0 then "(none)"

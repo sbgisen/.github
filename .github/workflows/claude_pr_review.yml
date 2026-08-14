@@ -179,6 +179,8 @@ jobs:
             query($owner: String!, $name: String!, $number: Int!) {
               repository(owner: $owner, name: $name) {
                 pullRequest(number: $number) {
+                  title
+                  body
                   reviews(first: 100) {
                     pageInfo { hasNextPage }
                     nodes { author { login } state submittedAt body }
@@ -232,8 +234,9 @@ jobs:
             CHANGED FILES: ${{ steps.diff.outputs.files }}
             DEPENDENCY PACKAGES (checked out under `.deps/` for reference):
             ${{ steps.deps.outputs.packages }}
-            PRIOR DISCUSSION: `.pr-context/discussion.md` (every review, inline comment
-            thread and conversation comment posted on this PR so far, pre-fetched)
+            PR CONTEXT: `.pr-context/discussion.md` (the PR title and description, plus
+            every review, inline comment thread and conversation comment posted on this
+            PR so far, pre-fetched)
 
             Your review instructions are in `${{ inputs.instructions_path }}`.
             Read that file first and follow it strictly, together with these
