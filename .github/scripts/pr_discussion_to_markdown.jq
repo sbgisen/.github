@@ -49,12 +49,12 @@ def body_quote(s):
          ""
      end)
   ]
-+ (if $pr.reviews.pageInfo.hasNextPage
-      or $pr.reviewThreads.pageInfo.hasNextPage
-      or $pr.comments.pageInfo.hasNextPage
-      or ([$threads[].comments.pageInfo.hasNextPage] | any)
++ (if $pr.reviews.pageInfo.hasPreviousPage
+      or $pr.reviewThreads.pageInfo.hasPreviousPage
+      or $pr.comments.pageInfo.hasPreviousPage
+      or ([$threads[].comments.pageInfo.hasPreviousPage] | any)
    then ["",
-         ("WARNING: This digest is truncated; only the first 100 items per "
-          + "section are included.")]
+         ("WARNING: This digest is truncated; only the most recent 100 items "
+          + "per section are included (the oldest ones were dropped).")]
    else [] end)
 | .[]

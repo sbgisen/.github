@@ -181,25 +181,25 @@ jobs:
                 pullRequest(number: $number) {
                   title
                   body
-                  reviews(first: 100) {
-                    pageInfo { hasNextPage }
+                  reviews(last: 100) {
+                    pageInfo { hasPreviousPage }
                     nodes { author { login } state submittedAt body }
                   }
-                  reviewThreads(first: 100) {
-                    pageInfo { hasNextPage }
+                  reviewThreads(last: 100) {
+                    pageInfo { hasPreviousPage }
                     nodes {
                       isResolved
                       isOutdated
                       path
                       line
-                      comments(first: 100) {
-                        pageInfo { hasNextPage }
+                      comments(last: 100) {
+                        pageInfo { hasPreviousPage }
                         nodes { author { login } createdAt body }
                       }
                     }
                   }
-                  comments(first: 100) {
-                    pageInfo { hasNextPage }
+                  comments(last: 100) {
+                    pageInfo { hasPreviousPage }
                     nodes { author { login } createdAt body }
                   }
                 }
