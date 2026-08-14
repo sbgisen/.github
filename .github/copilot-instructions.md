@@ -108,18 +108,27 @@ newer feature (C++20 ranges/`std::format`, 3.12-only syntax, a newer ROS API), r
    ```markdown
    SBGISEN PR REVIEW 2026
 
+   ## EN
+
    ### Summary
-   - <what the change does — 2–4 short bullets, English, one line each>
+   - <what the change does — 2–4 short bullets, one line each>
+
+   **Verdict: <APPROVE | COMMENT | REQUEST_CHANGES>** — <one-line rationale, English>
+
+   ---
+
+   ## JP
 
    ### 概要
    - <the same bullets in Japanese>
 
-   **Verdict: <APPROVE | COMMENT | REQUEST_CHANGES>** — <one-line rationale, English / 日本語>
+   **Verdict: <APPROVE | COMMENT | REQUEST_CHANGES>** — <one-line rationale, Japanese>
    ```
 
    The first line must be exactly the marker sentence `SBGISEN PR REVIEW 2026`.
-   Verdict meanings: **APPROVE** (sound) / **COMMENT** (questions, no block) /
-   **REQUEST_CHANGES** (≥1 `[MUST-FIX]`).
+   Keep the two language blocks fully separate — never mix English and Japanese in
+   one line — and state the SAME verdict in both. Verdict meanings: **APPROVE**
+   (sound) / **COMMENT** (questions, no block) / **REQUEST_CHANGES** (≥1 `[MUST-FIX]`).
 2. **Inline comments** — one per issue, anchored to `path:line`, each starting with
    exactly one label, following the what/why/how rule, with a ```suggestion block where a
    concrete fix exists. Group duplicate instances; never flag the same issue twice.
